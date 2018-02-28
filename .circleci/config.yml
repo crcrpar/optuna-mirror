@@ -32,4 +32,7 @@ jobs:
           name: run tests
           command: |
             . venv/bin/activate
-            pytest tests
+            pytest tests/test_dummy.py
+            pytest tests/storage_tests/test_rdb.py
+            pytest tests/test_study.py
+
