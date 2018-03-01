@@ -15,9 +15,12 @@ from pfnopt.storage.rdb import TrialParam
 from pfnopt.storage.rdb import TrialValue
 import pfnopt.trial as trial_module
 
+import memory_profiler
+
 
 class TestRDBStorage(unittest.TestCase):
 
+    @memory_profiler.profile
     def test_create_new_study_id(self):
         # type: () -> None
         storage = self.create_test_storage()
@@ -30,6 +33,7 @@ class TestRDBStorage(unittest.TestCase):
 
         storage.close()
 
+    @memory_profiler.profile
     def test_set_study_param_distribution(self):
         # type: () -> None
         storage = self.create_test_storage()
@@ -61,6 +65,7 @@ class TestRDBStorage(unittest.TestCase):
         # test setting existing name with the same distribution
         storage.set_study_param_distribution(study_id, 'y', categorical)
 
+    @memory_profiler.profile
     def test_create_new_trial_id(self):
         # type: () -> None
         storage = self.create_test_storage()
@@ -76,6 +81,7 @@ class TestRDBStorage(unittest.TestCase):
 
         storage.close()
 
+    @memory_profiler.profile
     def test_set_trial_state(self):
         # type: () -> None
         storage = self.create_test_storage()
@@ -94,6 +100,7 @@ class TestRDBStorage(unittest.TestCase):
 
         storage.close()
 
+    @memory_profiler.profile
     def test_set_trial_param(self):
         # type: () -> None
         storage = self.create_test_storage()
@@ -127,6 +134,7 @@ class TestRDBStorage(unittest.TestCase):
 
         storage.close()
 
+    @memory_profiler.profile
     def test_set_trial_value(self):
         # type: () -> None
         storage = self.create_test_storage()
@@ -142,6 +150,7 @@ class TestRDBStorage(unittest.TestCase):
 
         storage.close()
 
+    @memory_profiler.profile
     def test_set_trial_intermediate_value(self):
         # type: () -> None
         storage = self.create_test_storage()
@@ -206,6 +215,7 @@ class TestRDBStorage(unittest.TestCase):
 
         storage.close()
 
+    @memory_profiler.profile
     def test_get_trial(self):
         # type: () -> None
         storage = self.create_test_storage()
@@ -245,6 +255,7 @@ class TestRDBStorage(unittest.TestCase):
 
         storage.close()
 
+    @memory_profiler.profile
     def test_get_all_trials(self):
         # type: () -> None
         storage = self.create_test_storage()

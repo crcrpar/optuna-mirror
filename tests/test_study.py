@@ -1,4 +1,5 @@
 import itertools
+import memory_profiler
 import multiprocessing
 import pytest
 import threading
@@ -25,6 +26,7 @@ class Func(object):
         self.sleep_sec = sleep_sec
         self.lock = threading.Lock()
 
+    @memory_profiler.profile
     def __call__(self, client):
         # type: (client_module.BaseClient) -> float
         with self.lock:
