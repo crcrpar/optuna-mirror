@@ -13,11 +13,11 @@ import uuid
 
 from pfnopt import distributions
 from pfnopt import frozen_trial
-from pfnopt.frozen_trial import State
 from pfnopt import logging
 from pfnopt.storages.base import BaseStorage
 from pfnopt.storages.base import SYSTEM_ATTRS_KEY
 from pfnopt.storages.rdb import models
+from pfnopt.study_summary import StudyTask
 from pfnopt import version
 
 
@@ -44,7 +44,7 @@ class RDBStorage(BaseStorage):
             if study is None:
                 break
 
-        study = models.StudyModel(study_uuid=study_uuid)
+        study = models.StudyModel(study_uuid)
         session.add(study)
         session.commit()
 
@@ -55,6 +55,18 @@ class RDBStorage(BaseStorage):
 
         return study.study_id
 
+    # TODO(sano): Support setting task in a thread-safe way.
+    # TODO(sano): Prevent simultaneous setting of StudyTask.MINIMIZE and StudyTask.MAXIMIZE.
+    def set_study_task(self, study_id, study_task):
+        # type: (int, StudyTask) -> None
+
+        session = self.scoped_session()  # type: orm.Session
+
+        study = models.StudyModel.find_by_id(study_id, session, allow_none=False)
+        study.task = study_task
+
+        session.commit()
+
     def set_study_user_attr(self, study_id, key, value):
         # type: (int, str, Any) -> None
 
@@ -63,8 +75,7 @@ class RDBStorage(BaseStorage):
         study = models.StudyModel.find_by_id(study_id, session, allow_none=False)
         attribute = models.StudyUserAttributeModel.find_by_study_and_key(study, key, session)
         if attribute is None:
-            attribute = models.StudyUserAttributeModel(
-                study_id=study_id, key=key, value_json=json.dumps(value))
+            attribute = models.StudyUserAttributeModel(study, key, json.dumps(value))
             session.add(attribute)
         else:
             attribute.value_json = json.dumps(value)
@@ -87,6 +98,11 @@ class RDBStorage(BaseStorage):
 
         return study.study_uuid
 
+    def get_study_task(self, study_id):
+        # type: (int, StudyTask) -> None
+
+        raise NotImplementedError
+
     def get_study_user_attrs(self, study_id):
         # type: (int) -> Dict[str, Any]
 
@@ -100,10 +116,12 @@ class RDBStorage(BaseStorage):
 
         session = self.scoped_session()
 
+        trial = models.TrialModel.find_by_id(trial_id, session, allow_none=False)
+
         param_distribution = models.TrialParamDistributionModel(
-            trial_id=trial_id,
-            param_name=param_name,
-            distribution_json=distributions.distribution_to_json(distribution)
+            trial,
+            param_name,
+            distributions.distribution_to_json(distribution)
         )
 
         param_distribution.check_and_add(session)
@@ -114,11 +132,8 @@ class RDBStorage(BaseStorage):
 
         session = self.scoped_session()
 
-        trial = models.TrialModel(
-            study_id=study_id,
-            state=State.RUNNING,
-            user_attributes_json=json.dumps({SYSTEM_ATTRS_KEY: {}})
-        )
+        study = models.StudyModel.find_by_id(study_id, session)
+        trial = models.TrialModel(study)
 
         session.add(trial)
         session.commit()
@@ -145,14 +160,15 @@ class RDBStorage(BaseStorage):
         trial = models.TrialModel.find_by_id(trial_id, session, allow_none=False)
         param_distribution = models.TrialParamDistributionModel.find_by_trial_and_param_name(
             trial, param_name, session, allow_none=False)
+
         param = models.TrialParamModel.find_by_trial_and_param_name(trial, param_name, session)
         if param is not None:
             assert param.param_value == param_value
             return
 
         param = models.TrialParamModel(
-            trial_id=trial_id,
-            param_distribution_id=param_distribution.param_distribution_id,
+            trial=trial,
+            param_distribution=param_distribution,
             param_value=param_value
         )
 
@@ -181,11 +197,7 @@ class RDBStorage(BaseStorage):
             assert trial_value.value == intermediate_value
             return
 
-        trial_value = models.TrialValueModel(
-            trial_id=trial_id,
-            step=step,
-            value=intermediate_value
-        )
+        trial_value = models.TrialValueModel(trial=trial, step=step, value=intermediate_value)
 
         session.add(trial_value)
         self._commit_or_rollback_on_integrity_error(session)
@@ -289,10 +301,7 @@ class RDBStorage(BaseStorage):
                         version.__version__, version_info.library_version))
             return
 
-        version_info = models.VersionInfoModel(
-            schema_version=models.SCHEMA_VERSION,
-            library_version=version.__version__
-        )
+        version_info = models.VersionInfoModel()
 
         session.add(version_info)
         self._commit_or_rollback_on_integrity_error(session)

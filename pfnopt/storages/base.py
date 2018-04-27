@@ -9,6 +9,7 @@ from typing import Tuple  # NOQA
 
 from pfnopt import distributions  # NOQA
 from pfnopt import frozen_trial
+from pfnopt.study_summary import StudyTask  # NOQA
 
 
 SYSTEM_ATTRS_KEY = '__system__'
@@ -22,6 +23,12 @@ class BaseStorage(object):
     @abc.abstractmethod
     def create_new_study_id(self):
         # type: () -> int
+
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def set_study_task(self, study_id, study_task):
+        # type: (int, StudyTask) -> None
 
         raise NotImplementedError
 
@@ -51,6 +58,12 @@ class BaseStorage(object):
     @abc.abstractmethod
     def get_study_uuid_from_id(self, study_id):
         # type: (int) -> str
+
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def get_study_task(self, study_id):
+        # type: (int, StudyTask) -> None
 
         raise NotImplementedError
 

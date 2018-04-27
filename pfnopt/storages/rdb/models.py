@@ -1,4 +1,7 @@
 from datetime import datetime
+import json
+
+from pfnopt.storages.base import SYSTEM_ATTRS_KEY
 from sqlalchemy import CheckConstraint
 from sqlalchemy import Column
 from sqlalchemy import DateTime
@@ -14,8 +17,9 @@ from typing import Any  # NOQA
 from typing import List  # NOQA
 from typing import Optional  # NOQA
 
-from pfnopt import distributions
 from pfnopt.frozen_trial import State
+from pfnopt import distributions, version
+from pfnopt.study_summary import StudyTask
 
 
 SCHEMA_VERSION = 3
@@ -29,6 +33,13 @@ class StudyModel(BaseModel):
     __tablename__ = 'studies'
     study_id = Column(Integer, primary_key=True)
     study_uuid = Column(String(255), unique=True)
+    task = Column(Enum(StudyTask), nullable=False)
+
+    def __init__(self, study_uuid):
+        # type: (str) -> None
+
+        self.study_uuid = study_uuid
+        self.task = StudyTask.NOT_SET
 
     @classmethod
     def find_by_id(cls, study_id, session, allow_none=True):
@@ -61,6 +72,13 @@ class StudyUserAttributeModel(BaseModel):
 
     study = orm.relationship(StudyModel)
 
+    def __init__(self, study, key, value_json):
+        # type: (StudyModel, str, str) -> None
+
+        self.study_id = study.study_id
+        self.key = key
+        self.value_json = value_json
+
     @classmethod
     def find_by_study_and_key(cls, study, key, session):
         # type: (StudyModel, str, orm.Session) -> Optional[StudyUserAttributeModel]
@@ -81,13 +99,20 @@ class TrialModel(BaseModel):
     __tablename__ = 'trials'
     trial_id = Column(Integer, primary_key=True)
     study_id = Column(Integer, ForeignKey('studies.study_id'))
-    state = Column(Enum(State))
+    state = Column(Enum(State), nullable=False)
     value = Column(Float)
     user_attributes_json = Column(String(255))
     datetime_start = Column(DateTime, default=datetime.now)
     datetime_complete = Column(DateTime)
 
     study = orm.relationship(StudyModel)
+
+    def __init__(self, study):
+        # type: (StudyModel) -> None
+
+        self.study_id = study.study_id
+        self.state = State.RUNNING
+        self.user_attributes_json = json.dumps({SYSTEM_ATTRS_KEY: {}})
 
     @classmethod
     def find_by_id(cls, trial_id, session, allow_none=True):
@@ -117,6 +142,13 @@ class TrialParamDistributionModel(BaseModel):
     distribution_json = Column(String(255))
 
     trial = orm.relationship(TrialModel)
+
+    def __init__(self, trial, param_name, distribution_json):
+        # type: (TrialModel, str, str) -> None
+
+        self.trial_id = trial.trial_id
+        self.param_name = param_name
+        self.distribution_json = distribution_json
 
     def check_and_add(self, session):
         # type: (orm.Session) -> None
@@ -164,6 +196,13 @@ class TrialParamModel(BaseModel):
     trial = orm.relationship(TrialModel)
     param_distribution = orm.relationship(TrialParamDistributionModel)
 
+    def __init__(self, trial, param_distribution, param_value):
+        # type: (TrialModel, TrialParamDistributionModel, float) -> None
+
+        self.trial_id = trial.trial_id
+        self.param_distribution_id = param_distribution.param_distribution_id
+        self.param_value = param_value
+
     @classmethod
     def find_by_trial_and_param_name(cls, trial, param_name, session):
         # type: (TrialModel, str, orm.Session) -> Optional[TrialParamModel]
@@ -202,6 +241,13 @@ class TrialValueModel(BaseModel):
 
     trial = orm.relationship(TrialModel)
 
+    def __init__(self, trial, step, value):
+        # type: (TrialModel, int, float) -> None
+
+        self.trial_id = trial.trial_id
+        self.step = step
+        self.value = value
+
     @classmethod
     def find_by_trial_and_step(cls, trial, step, session):
         # type: (TrialModel, int, orm.Session) -> Optional[TrialValueModel]
@@ -237,6 +283,10 @@ class VersionInfoModel(BaseModel):
     version_info_id = Column(Integer, primary_key=True, autoincrement=False, default=1)
     schema_version = Column(Integer)
     library_version = Column(String(255))
+
+    def __init__(self):
+        self.schema_version = SCHEMA_VERSION
+        self.library_version = version.__version__
 
     @classmethod
     def find(cls, session):

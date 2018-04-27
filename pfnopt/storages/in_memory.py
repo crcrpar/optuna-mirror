@@ -8,6 +8,7 @@ from typing import List  # NOQA
 from pfnopt import distributions  # NOQA
 from pfnopt import frozen_trial
 from pfnopt.storages import base
+from pfnopt.study_summary import StudyTask
 
 
 IN_MEMORY_STORAGE_STUDY_ID = 0
@@ -42,6 +43,11 @@ class InMemoryStorage(base.BaseStorage):
 
         return IN_MEMORY_STORAGE_STUDY_ID  # TODO(akiba)
 
+    def set_study_task(self, study_id, study_task):
+        # type: (int, StudyTask) -> None
+
+        raise NotImplementedError
+
     def set_study_user_attr(self, study_id, key, value):
         # type: (int, str, Any) -> None
 
@@ -59,6 +65,11 @@ class InMemoryStorage(base.BaseStorage):
 
         self._check_study_id(study_id)
         return IN_MEMORY_STORAGE_STUDY_UUID
+
+    def get_study_task(self, study_id):
+        # type: (int, StudyTask) -> None
+
+        raise NotImplementedError
 
     def get_study_user_attrs(self, study_id):
         # type: (int) -> Dict[str, Any]
