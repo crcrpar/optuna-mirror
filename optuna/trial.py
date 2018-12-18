@@ -407,6 +407,10 @@ class Trial(BaseTrial):
         if not set_success:
             param_value_in_internal_repr = self.storage.get_trial_param(self.trial_id, name)
 
+        if self.study.save_distribution:
+            self.set_system_attr('dist/{}'.format(name),
+                                 distributions.distribution_to_json(distribution))
+
         param_value = distribution.to_external_repr(param_value_in_internal_repr)
         return param_value
 
@@ -558,3 +562,66 @@ class FixedTrial(BaseTrial):
         # type: () -> Dict[str, Any]
 
         return self._system_attrs
+
+
+class InjectedTrial(Trial):
+
+    """A trial class which inputs externally suggested parameters.
+
+     This object has the same methods as :class:`~optuna.trial.Trial`, and it suggests pre-defined
+    parameter values, similarly to :class:`~optuna.trial.FixedTrial`. The parameter values can be
+    determined at the construction of the :class:`~optuna.trial.InjectedTrial` object. In contrast
+    to :class:`~optuna.trial.FixedTrial`, :class:`~optuna.trial.InjectedTrial` saves suggested
+    parameters to storage, and it is useful to inject externally suggested parameter sets to the
+    study.
+
+    Example:
+
+        Evaluate an objective function with parameter values given by a user:
+
+        .. code::
+
+            >>> def objective(trial):
+            >>>     x = trial.suggest_uniform('x', -100, 100)
+            >>>     y = trial.suggest_categorical('y', [-1, 0, 1])
+            >>>     return x ** 2 + y
+            >>>
+            >>> study = optuna.create_study()
+            >>>
+            >>> result = objective(InjectedTrial(study, trial_id, {'x': 1, 'y': 0}))
+            >>> trial.report(result)
+            >>> study.storage.set_trial_state(trial.trial_id, optuna.structs.TrialState.COMPLETE)
+
+    .. note::
+        Please refer to :class:`~optuna.trial.Trial` for details of methods and properties.
+
+    Args:
+        study:
+            A :class:`~optuna.study.Study` object.
+        trial_id:
+            A trial ID that is automatically generated.
+        params:
+            A dictionary containing all parameters.
+
+    """
+
+    def __init__(self, study, params):
+        # type: (Study, Dict[str, Any]) -> None
+
+        trial_id = study.storage.create_new_trial_id(study.study_id)
+        super(InjectedTrial, self).__init__(study, trial_id)
+        self._params = params
+
+    def _suggest(self, name, distribution):
+        # type: (str, distributions.BaseDistribution) -> Any
+
+        if name not in self._params:
+            raise ValueError('The value of the parameter \'{}\' is not found. Please set it at '
+                             'the construction of the FixedTrial object.'.format(name))
+
+        param_value_in_external_repr = self._params[name]
+        param_value_in_internal_repr = distribution.to_internal_repr(param_value_in_external_repr)
+
+        self.study.storage.set_trial_param(
+            self.trial_id, name, param_value_in_internal_repr, distribution)
+        return param_value_in_external_repr

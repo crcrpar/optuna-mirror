@@ -3,12 +3,34 @@ from mock import patch
 import pytest
 import typing  # NOQA
 
+import optuna
 from optuna import distributions
 from optuna import samplers
 from optuna import storages
 from optuna.study import create_study
 from optuna.trial import FixedTrial
+from optuna.trial import InjectedTrial
 from optuna.trial import Trial
+from optuna.testing.storage import StorageSupplier
+
+STORAGE_MODES = [
+    'none',    # We give `None` to storage argument, so InMemoryStorage is used.
+    'new',     # We always create a new sqlite DB file for each experiment.
+    'common',  # We use a sqlite DB file for the whole experiments.
+]
+
+
+def setup_module():
+    # type: () -> None
+
+    StorageSupplier.setup_common_tempfile()
+
+
+def teardown_module():
+    # type: () -> None
+
+    StorageSupplier.teardown_common_tempfile()
+
 
 parametrize_storage = pytest.mark.parametrize(
     'storage_init_func',
@@ -164,3 +186,86 @@ def test_fixed_trial_should_prune():
 
     # FixedTrial never prunes trials.
     assert FixedTrial({}).should_prune(1) is False
+
+
+class TestInjectedTrial(object):
+
+    @staticmethod
+    @pytest.mark.parametrize('storage_mode', STORAGE_MODES)
+    def test_suggest_uniform(storage_mode):
+        # type: (str) -> None
+
+        with StorageSupplier(storage_mode) as storage:
+            study = optuna.create_study(storage=storage)
+            trial = InjectedTrial(study, {'x': 1.})
+            assert trial.suggest_uniform('x', -100., 100.) == 1.
+            assert study.trials[-1].params['x'] == 1.
+            assert trial.suggest_uniform('x', -100., 100.) == 1.
+
+            with pytest.raises(ValueError):
+                trial.suggest_uniform('y', -100., 100.)
+            assert 'y' not in study.trials[-1]
+
+    @staticmethod
+    @pytest.mark.parametrize('storage_mode', STORAGE_MODES)
+    def test_suggest_loguniform(storage_mode):
+        # type: (str) -> None
+
+        with StorageSupplier(storage_mode) as storage:
+            study = optuna.create_study(storage=storage)
+            trial = InjectedTrial(study, {'x': 1.})
+            assert trial.suggest_loguniform('x', 0., 1.) == 1.
+            assert study.trials[-1].params['x'] == 1.
+            assert trial.suggest_loguniform('x', 0., 1.) == 1.
+
+            with pytest.raises(ValueError):
+                trial.suggest_loguniform('y', 0., 1.)
+            assert 'y' not in study.trials[-1]
+
+    @staticmethod
+    @pytest.mark.parametrize('storage_mode', STORAGE_MODES)
+    def test_suggest_discrete_uniform(storage_mode):
+        # type: (str) -> None
+
+        with StorageSupplier(storage_mode) as storage:
+            study = optuna.create_study(storage=storage)
+            trial = InjectedTrial(study, {'x': 1.})
+            assert trial.suggest_discrete_uniform('x', 0., 1., 0.1) == 1.
+            assert study.trials[-1].params['x'] == 1.
+            assert trial.suggest_discrete_uniform('x', 0., 1., 0.1) == 1.
+
+            with pytest.raises(ValueError):
+                trial.suggest_discrete_uniform('y', 0., 1., 0.1)
+            assert 'y' not in study.trials[-1]
+
+    @staticmethod
+    @pytest.mark.parametrize('storage_mode', STORAGE_MODES)
+    def test_suggest_int(storage_mode):
+        # type: (str) -> None
+
+        with StorageSupplier(storage_mode) as storage:
+            study = optuna.create_study(storage=storage)
+            trial = InjectedTrial(study, {'x': 1})
+            assert trial.suggest_int('x', 0, 10) == 1
+            assert study.trials[-1].params['x'] == 1
+            assert trial.suggest_int('x', 0, 10) == 1
+
+            with pytest.raises(ValueError):
+                trial.suggest_int('y', 0, 10)
+            assert 'y' not in study.trials[-1]
+
+    @staticmethod
+    @pytest.mark.parametrize('storage_mode', STORAGE_MODES)
+    def test_suggest_categorical(storage_mode):
+        # type: () -> None
+
+        with StorageSupplier(storage_mode) as storage:
+            study = optuna.create_study(storage=storage)
+            trial = InjectedTrial(study, {'x': 1})
+            assert trial.suggest_categorical('x', [0, 1, 2, 3]) == 1
+            assert study.trials[-1].params['x'] == 1
+            assert trial.suggest_categorical('x', [0, 1, 2, 3]) == 1
+
+            with pytest.raises(ValueError):
+                trial.suggest_categorical('y', [0, 1, 2, 3])
+            assert 'y' not in study.trials[-1]
