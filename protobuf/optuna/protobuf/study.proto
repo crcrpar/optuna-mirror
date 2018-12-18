@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package optuna.protobuf;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
+import "optuna/protobuf/pruners.proto";
+import "optuna/protobuf/samplers.proto";
+import "optuna/protobuf/session.proto";
+import "optuna/protobuf/structs.proto";
+
+service Study {
+  rpc create_study(CreateStudyRequest) returns (StudyRef) {}
+  rpc load_study(LoadStudyRequest) returns (StudyRef) {}
+  rpc close_study(StudyRef) returns (google.protobuf.Empty) {}
+  rpc trials(StudyRef) returns (stream FrozenTrial) {}
+  rpc set_user_attr(SetUserAttrRequest) returns (google.protobuf.Empty) {}
+  rpc study_summary(StudyRef) returns (StudySummary) {}
+  rpc get_all_study_summaries(google.protobuf.StringValue) returns (stream StudySummary) {}
+}
+
+message StudyRef {
+  SessionRef session = 1;
+  uint64 study_id = 2;
+}
+
+message CreateStudyRequest {
+  SessionRef session = 1;
+  string study_name = 2;
+  Sampler sampler = 3;
+  Pruner pruner = 4;
+  string storage = 5;
+  string direction = 6;
+  bool load_if_exists = 7;
+}
+
+message LoadStudyRequest {
+  SessionRef session = 1;
+  string study_name = 2;
+  Sampler sampler = 3;
+  Pruner pruner = 4;
+  string storage = 5;
+  string direction = 6;
+}
+
+message SetUserAttrRequest {
+  StudyRef study = 1;
+  string key = 2;
+  JsonValue value = 3;
+}

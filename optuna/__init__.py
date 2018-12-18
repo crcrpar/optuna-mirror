@@ -4,6 +4,7 @@ from optuna import distributions  # NOQA
 from optuna import integration  # NOQA
 from optuna import logging  # NOQA
 from optuna import pruners  # NOQA
+from optuna import rpc  # NOQA
 from optuna import samplers  # NOQA
 from optuna import storages  # NOQA
 from optuna import structs  # NOQA

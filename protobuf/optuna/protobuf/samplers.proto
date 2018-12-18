@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package optuna.protobuf;
+
+message Sampler {
+  oneof sampler_oneof {
+    TPESampler tpe = 1;
+    RandomSampler random = 2;
+  }
+}
+
+message TPESampler {
+  bool consider_prior = 1;
+  float prior_weight = 2;
+  bool consider_magic_clip = 3;
+  bool consider_endpoints = 4;
+  uint32 n_startup_trials = 5;
+  uint32 n_ei_candidates = 6;
+  uint32 gamma = 7;
+  repeated uint32 weights = 8;
+  uint32 seed = 9;
+}
+
+message RandomSampler {
+  uint32 seed = 1;
+}

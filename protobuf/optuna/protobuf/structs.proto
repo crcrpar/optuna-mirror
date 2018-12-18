@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package optuna.protobuf;
+
+import "google/protobuf/timestamp.proto";
+
+enum StudyDirection {
+  NOT_SET = 0;
+  MINIMIZE = 1;
+  MAXIMIZE = 2;
+}
+
+enum TrialState {
+  RUNNING = 0;
+  COMPLETE = 1;
+  PRUNED = 2;
+  FAIL = 3;
+}
+
+message JsonValue {
+  string value = 1;
+}
+
+message FrozenTrial {
+  int64 trial_id = 1;
+  TrialState state = 2;
+  double value = 3;
+  google.protobuf.Timestamp datetime_start = 4;
+  google.protobuf.Timestamp datetime_complete = 5;
+  StrJsonMap params = 6;
+  StrJsonMap user_attrs = 7;
+  StrJsonMap system_attrs = 8;
+  map<int64, double> intermediate_values = 9;
+  map<int64, double> params_in_internal_repr = 10;
+}
+
+message StrJsonMap {
+  map<string, JsonValue> map = 1;
+}
+
+message StudySummary {
+  int64 study_id = 1;
+  string study_name = 2;
+  StudyDirection direction = 3;
+  FrozenTrial best_trial = 4;
+  StrJsonMap user_attrs = 5;
+  StrJsonMap system_attrs = 6;
+  uint64 n_trials = 7;
+  google.protobuf.Timestamp datetime_start = 8;
+}

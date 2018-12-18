@@ -390,6 +390,10 @@ class Study(object):
         que.close()
         que.join_thread()
 
+    def _create_new_trial(self):
+        trial_id = self.storage.create_new_trial_id(self.study_id)
+        return trial_module.Trial(self, trial_id)
+
     def _run_trial(self, func, catch):
         # type: (ObjectiveFuncType, Union[Tuple[()], Tuple[Type[Exception]]]) -> trial_module.Trial
 
@@ -436,6 +440,23 @@ class Study(object):
         self._log_completed_trial(result)
 
         return trial
+
+    def _complete_trial(self, trial_id, result):
+        trial = trial_module.Trial(self, trial_id)
+        if math.isnan(result):
+            message = 'Setting trial status as {} because the objective function returned ' \
+                      '{}.'.format(structs.TrialState.FAIL, result)
+            self.logger.warning(message)
+            self.storage.set_trial_state(trial_id, structs.TrialState.FAIL)
+            self.storage.set_trial_system_attr(trial_id, 'fail_reason', message)
+            return
+
+        trial.report(result)
+        self.storage.set_trial_state(trial_id, structs.TrialState.COMPLETE)
+        self._log_completed_trial(result)
+
+    def _get_trial(self, trial_id):
+        return trial_module.Trial(self, trial_id)
 
     def _log_completed_trial(self, value):
         # type: (float) -> None

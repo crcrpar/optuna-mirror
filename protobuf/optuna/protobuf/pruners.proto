@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package optuna.protobuf;
+
+message Pruner {
+  oneof pruner_oneof {
+    MedianPruner median = 1;
+  }
+}
+
+message MedianPruner {
+  uint32 n_startup_trials = 1;
+  uint32 n_warmup_steps = 2;
+}

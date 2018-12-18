@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package optuna.protobuf;
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/empty.proto";
+
+service Session {
+  rpc allocate_session(SessionAllocateRequest) returns (SessionRef) {}
+  rpc release_session(SessionRef) returns (google.protobuf.Empty) {}
+  rpc heartbeat_session(SessionRef) returns (google.protobuf.Empty) {}
+}
+
+message SessionAllocateRequest {
+  google.protobuf.Duration keepalive_timeout = 1;
+}
+
+message SessionRef {
+  uint64 session_id = 1;
+}
