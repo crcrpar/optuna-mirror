@@ -63,8 +63,11 @@ class RDBStorage(BaseStorage):
                                   direction=structs.StudyDirection.NOT_SET)
         session.add(study)
         if not self._commit_with_integrity_check(session):
-            raise ValueError(
-                "study_name {} already exists. Please use a different name.".format(study_name))
+            raise structs.DuplicatedStudyError(
+                "Another study with name '{}' already exists. "
+                "Please specify a different name, or reuse the existing one "
+                "by setting `load_if_exists` (for Python API) or "
+                "`--skip-if-exists` flag (for CLI).".format(study_name))
 
         self.logger.info('A new study created with name: {}'.format(study.study_name))
 
@@ -114,7 +117,7 @@ class RDBStorage(BaseStorage):
         else:
             attribute.value_json = json.dumps(value)
 
-        self._commit(session)
+        self._commit_with_integrity_check(session)
 
     def set_study_system_attr(self, study_id, key, value):
         # type: (int, str, Any) -> None
@@ -130,7 +133,7 @@ class RDBStorage(BaseStorage):
         else:
             attribute.value_json = json.dumps(value)
 
-        self._commit(session)
+        self._commit_with_integrity_check(session)
 
     def get_study_id_from_name(self, study_name):
         # type: (str) -> int
@@ -355,8 +358,7 @@ class RDBStorage(BaseStorage):
         else:
             attribute.value_json = json.dumps(value)
 
-        # TODO(Yanase): Take care of IntegrityError on multi-worker environment.
-        self._commit(session)
+        self._commit_with_integrity_check(session)
 
     def set_trial_system_attr(self, trial_id, key, value):
         # type: (int, str, Any) -> None
@@ -373,7 +375,7 @@ class RDBStorage(BaseStorage):
         else:
             attribute.value_json = json.dumps(value)
 
-        self._commit(session)
+        self._commit_with_integrity_check(session)
 
     def get_trial(self, trial_id):
         # type: (int) -> structs.FrozenTrial

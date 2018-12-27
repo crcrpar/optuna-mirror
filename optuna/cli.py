@@ -53,6 +53,9 @@ class CreateStudy(BaseCommand):
                             default='minimize',
                             help='Set direction of optimization to a new study. Set \'minimize\' '
                                  'for minimization and \'maximize\' for maximization.')
+        parser.add_argument('--skip-if-exists', default=False, action='store_true',
+                            help='If specified, the creation of the study is skipped '
+                                 'without any error when the study name is duplicated.')
         return parser
 
     def take_action(self, parsed_args):
@@ -62,7 +65,8 @@ class CreateStudy(BaseCommand):
         storage_url = get_storage_url(self.app_args.storage, config)
         storage = optuna.storages.RDBStorage(storage_url)
         study_name = optuna.create_study(storage, study_name=parsed_args.study_name,
-                                         direction=parsed_args.direction).study_name
+                                         direction=parsed_args.direction,
+                                         load_if_exists=parsed_args.skip_if_exists).study_name
         print(study_name)
 
 
@@ -126,6 +130,16 @@ class Dashboard(BaseCommand):
         parser.add_argument('--out', '-o',
                             help='Output HTML file path. If it is not given, a HTTP server starts '
                                  'and the dashboard is served.')
+        parser.add_argument('--allow-websocket-origin',
+                            dest='bokeh_allow_websocket_origins',
+                            action='append',
+                            default=[],
+                            help='Allow websocket access from the specified host(s).'
+                                 'Internally, it is used as the value of bokeh\'s '
+                                 '--allow-websocket-origin option. Please refer to '
+                                 'https://bokeh.pydata.org/en/latest/docs/'
+                                 'reference/command/subcommands/serve.html '
+                                 'for more details.')
         return parser
 
     def take_action(self, parsed_args):
@@ -136,7 +150,7 @@ class Dashboard(BaseCommand):
         study = optuna.Study(storage=storage_url, study_name=parsed_args.study)
 
         if parsed_args.out is None:
-            optuna.dashboard.serve(study)
+            optuna.dashboard.serve(study, parsed_args.bokeh_allow_websocket_origins)
         else:
             optuna.dashboard.write(study, parsed_args.out)
             self.logger.info('Report successfully written to: {}'.format(parsed_args.out))

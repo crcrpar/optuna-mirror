@@ -24,8 +24,10 @@ def get_install_requires():
 
 def get_extras_require():
     extras_require = {
-        'checking': ['hacking'],
+        'checking': ['autopep8', 'hacking'],
         'testing': ['pytest', 'mock', 'bokeh', 'chainer>=5.0.0', 'xgboost', 'mpi4py', 'lightgbm'],
+        # TODO(higumachan): merge 'keras' to 'testing' after Tensorflow supports Python 3.7.
+        'keras': ['keras', 'tensorflow'],
         'document': ['sphinx', 'sphinx_rtd_theme'],
     }
     if sys.version_info >= (3, 4):  # requires Python 3.4 or later
