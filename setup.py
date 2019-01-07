@@ -16,7 +16,8 @@ def get_version():
 
 def get_install_requires():
     install_requires = [
-        'sqlalchemy>=1.1.0', 'numpy', 'scipy', 'six', 'typing', 'cliff', 'colorlog', 'pandas']
+        'sqlalchemy>=1.1.0', 'numpy', 'scipy', 'six', 'typing', 'cliff', 'colorlog', 'pandas'
+    ]
     if sys.version_info[0] == 2:
         install_requires.extend(['enum34'])
     return install_requires
@@ -63,7 +64,4 @@ setup(
     install_requires=get_install_requires(),
     tests_require=get_extras_require()['testing'],
     extras_require=get_extras_require(),
-    entry_points={
-        'console_scripts': ['optuna = optuna.cli:main']
-    }
-)
+    entry_points={'console_scripts': ['optuna = optuna.cli:main']})

@@ -19,13 +19,13 @@ def test_lightgbm_pruning_callback_call():
 
     # The pruner is deactivated.
     study = optuna.create_study(pruner=DeterministicPruner(False))
-    trial = study._run_trial(func=lambda _: 1.0, catch=(Exception,))
+    trial = study._run_trial(func=lambda _: 1.0, catch=(Exception, ))
     pruning_callback = LightGBMPruningCallback(trial, 'binary_error', valid_name='validation')
     pruning_callback(env)
 
     # The pruner is activated.
     study = optuna.create_study(pruner=DeterministicPruner(True))
-    trial = study._run_trial(func=lambda _: 1.0, catch=(Exception,))
+    trial = study._run_trial(func=lambda _: 1.0, catch=(Exception, ))
     pruning_callback = LightGBMPruningCallback(trial, 'binary_error', valid_name='validation')
     with pytest.raises(optuna.structs.TrialPruned):
         pruning_callback(env)
@@ -67,9 +67,10 @@ def test_lightgbm_pruning_callback_errors():
     # Unknown validation name
     study = optuna.create_study(pruner=DeterministicPruner(False))
     with pytest.raises(ValueError):
-        study.optimize(lambda trial: objective(trial, valid_name='valid_1',
-                                               force_default_valid_names=True),
-                       n_trials=1, catch=())
+        study.optimize(
+            lambda trial: objective(trial, valid_name='valid_1', force_default_valid_names=True),
+            n_trials=1,
+            catch=())
 
 
 def objective(trial, metric='binary_error', valid_name='valid_0', force_default_valid_names=False):
@@ -84,7 +85,14 @@ def objective(trial, metric='binary_error', valid_name='valid_0', force_default_
         valid_names = [valid_name]
 
     pruning_callback = LightGBMPruningCallback(trial, metric, valid_name=valid_name)
-    lgb.train({'objective': 'binary', 'metric': ['auc', 'binary_error']}, dtrain, 1,
-              valid_sets=[dtest], valid_names=valid_names,
-              verbose_eval=False, callbacks=[pruning_callback])
+    lgb.train({
+        'objective': 'binary',
+        'metric': ['auc', 'binary_error']
+    },
+              dtrain,
+              1,
+              valid_sets=[dtest],
+              valid_names=valid_names,
+              verbose_eval=False,
+              callbacks=[pruning_callback])
     return 1.0
