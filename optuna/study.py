@@ -62,11 +62,12 @@ class Study(object):
             sampler=None,  # type: samplers.BaseSampler
             pruner=None,  # type: pruners.BasePruner
             direction='minimize',  # type: str
+            cache_timeout=60,  # type: int
     ):
         # type: (...) -> None
 
         self.study_name = study_name
-        self.storage = storages.get_storage(storage)
+        self.storage = storages.get_storage(storage, cache_timeout=cache_timeout)
         self.sampler = sampler or samplers.TPESampler()
         self.pruner = pruner or pruners.MedianPruner()
 
@@ -459,6 +460,7 @@ def create_study(
         study_name=None,  # type: Optional[str]
         direction='minimize',  # type: str
         load_if_exists=False,  # type: bool
+        cache_timeout=60,  # type: int
 ):
     # type: (...) -> Study
     """Create a new :class:`~optuna.study.Study`.
@@ -491,7 +493,7 @@ def create_study(
 
     """
 
-    storage = storages.get_storage(storage)
+    storage = storages.get_storage(storage, cache_timeout=cache_timeout)
     try:
         study_id = storage.create_new_study_id(study_name)
     except structs.DuplicatedStudyError:
@@ -508,7 +510,7 @@ def create_study(
     study_name = storage.get_study_name_from_id(study_id)
 
     return Study(study_name=study_name, storage=storage, sampler=sampler, pruner=pruner,
-                 direction=direction)
+                 direction=direction, cache_timeout=cache_timeout)
 
 
 def get_all_study_summaries(storage):
