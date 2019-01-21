@@ -6,13 +6,16 @@ from typing import Tuple  # NOQA
 from typing import Type  # NOQA
 from typing import Union  # NOQA
 
+from optuna.distributions import BaseDistribution  # NOQA
 from optuna.logging import get_logger
 from optuna.pruners import BasePruner  # NOQA
+from optuna.samplers import BaseSampler  # NOQA
 from optuna.storages import BaseStorage  # NOQA
 from optuna.storages import InMemoryStorage
 from optuna.storages import RDBStorage
 from optuna.structs import TrialPruned
 from optuna.study import Study  # NOQA
+from optuna.trial import BaseTrial
 from optuna.trial import Trial  # NOQA
 
 try:
@@ -100,6 +103,7 @@ class ChainerMNStudy(object):
         if len(set(study_names)) != 1:
             raise ValueError('Please make sure an identical study name is shared among workers.')
 
+        study.sampler = ChainerMNSampler(sampler=study.sampler, comm=comm)
         study.pruner = ChainerMNPruner(pruner=study.pruner, comm=comm)
         super(ChainerMNStudy, self).__setattr__('delegate', study)
         super(ChainerMNStudy, self).__setattr__('comm', comm)
@@ -129,7 +133,7 @@ class ChainerMNStudy(object):
                     break
                 trial = Trial(self.delegate, trial_id)
                 try:
-                    func(trial, self.comm)
+                    func(ChainerMNSlaveTrial(trial), self.comm)
 
                     # We assume that if a node raises an exception,
                     # all other nodes will do the same.
@@ -146,17 +150,6 @@ class ChainerMNStudy(object):
 
     def __setattr__(self, attr_name, value):
         setattr(self.delegate, attr_name, value)
-
-
-def _check_chainermn_availability():
-    # type: () -> None
-
-    if not _available:
-        raise ImportError(
-            'ChainerMN is not available. Please install ChainerMN to use this feature. '
-            'ChainerMN can be installed by executing `$ pip install chainermn`. '
-            'For further information, please refer to the installation guide of ChainerMN. '
-            '(The actual import error is as follows: ' + str(_import_error) + ')')
 
 
 class ChainerMNPruner(BasePruner):
@@ -182,3 +175,115 @@ class ChainerMNPruner(BasePruner):
             if isinstance(result, Exception):
                 raise result
             return result
+
+
+class ChainerMNSampler(BaseSampler):
+    def __init__(self, sampler, comm):
+        # type: (BaseSampler, CommunicatorBase) -> None
+
+        self.delegate = sampler
+        self.comm = comm
+
+    def sample(self, storage, study_id, param_name, param_distribution):
+        # type: (BaseStorage, int, str, BaseDistribution) -> float
+
+        if self.comm.rank == 0:
+            try:
+                result = self.delegate.sample(storage, study_id, param_name, param_distribution)
+                self.comm.mpi_comm.bcast(result)
+                return result
+            except Exception as e:
+                self.comm.mpi_comm.bcast(e)
+                raise
+        else:
+            result = self.comm.mpi_comm.bcast(None)
+            if isinstance(result, Exception):
+                raise result
+            return result
+
+
+class ChainerMNSlaveTrial(BaseTrial):
+    def __init__(self, trial):
+        # type: (Trial) -> None
+
+        self.delegate = trial
+
+    def suggest_uniform(self, name, low, high):
+        # type: (str, float, float) -> float
+
+        return self.delegate.suggest_uniform(name, low, high)
+
+    def suggest_loguniform(self, name, low, high):
+        # type: (str, float, float) -> float
+
+        return self.delegate.suggest_loguniform(name, low, high)
+
+    def suggest_discrete_uniform(self, name, low, high, q):
+        # type: (str, float, float, float) -> float
+
+        return self.delegate.suggest_discrete_uniform(name, low, high, q)
+
+    def suggest_int(self, name, low, high):
+        # type: (str, int, int) -> int
+
+        return self.delegate.suggest_int(name, low, high)
+
+    def suggest_categorical(self, name, choices):
+        # type: (str, Sequence[T]) -> T
+
+        return self.delegate.suggest_categorical(name, choices)
+
+    def report(self, value, step=None):
+        # type: (float, Optional[int]) -> None
+
+        pass
+
+    def should_prune(self, step):
+        # type: (int) -> bool
+
+        return self.delegate.should_prune(step)
+
+    def set_user_attr(self, key, value):
+        # type: (str, Any) -> None
+
+        pass
+
+    def set_system_attr(self, key, value):
+        # type: (str, Any) -> None
+
+        pass
+
+    @property
+    def trial_id(self):
+        # type: () -> int
+
+        return self.delegate.trial_id
+
+    @property
+    def params(self):
+        # type: () -> Dict[str, Any]
+
+        return self.delegate.params
+
+    @property
+    def user_attrs(self):
+        # type: () -> Dict[str, Any]
+
+        return self.delegate.user_attrs
+
+    @property
+    def system_attrs(self):
+        # type: () -> Dict[str, Any]
+
+        return self.delegate.system_attrs
+
+
+def _check_chainermn_availability():
+    # type: () -> None
+
+    if not _available:
+        raise ImportError(
+            'ChainerMN is not available. Please install ChainerMN to use this feature. '
+            'ChainerMN can be installed by executing `$ pip install chainermn`. '
+            'For further information, please refer to the installation guide of ChainerMN. '
+            '(The actual import error is as follows: ' + str(_import_error) + ')')
