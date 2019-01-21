@@ -51,7 +51,7 @@ class RDBStorage(BaseStorage):
         models.BaseModel.metadata.create_all(self.engine)
         self._check_table_schema_compatibility()
         self.logger = logging.get_logger(__name__)
-        self.finished_trial_cache = cache.TrialCache(cache_timeout)
+        self.finished_trials_cache = cache.TrialsCache(cache_timeout)
 
     def create_new_study_id(self, study_name=None):
         # type: (Optional[str]) -> int
@@ -414,35 +414,25 @@ class RDBStorage(BaseStorage):
     def get_all_trials(self, study_id):
         # type: (int) -> List[structs.FrozenTrial]
 
-        if not self.finished_trial_cache.is_known_study(study_id):
-            trials = self._get_all_trials_without_cache(study_id)
-            for trial in trials:
-                self._cache_trial_if_safe(study_id, trial)
+        with self.finished_trials_cache.lock_study(study_id) as study_cache:
+            if not study_cache.empty():
+                trials = self._get_all_trials_without_cache(study_id)
+                for trial in trials:
+                    study_cache.cache_trial_if_finished(trial)
 
+                return trials
+
+            trials = []
+            trial_ids = self._get_all_trial_ids(study_id)
+            for trial_id in trial_ids:
+                cached_trial = study_cache.find_cached_trial(trial_id)
+                if cached_trial is None:
+                    trial = self.get_trial(trial_id)
+                    study_cache.cache_trial_if_finished(trial)
+                    trials.append(trial)
+                else:
+                    trials.append(cached_trial)
             return trials
-
-        self.finished_trial_cache.remove_old_cache()
-
-        trials = []
-        trial_ids = self._get_all_trial_ids(study_id)
-        for trial_id in trial_ids:
-            cached_trial = self.finished_trial_cache.find_cached_trial(study_id, trial_id)
-            if cached_trial is None:
-                trial = self.get_trial(trial_id)
-                self._cache_trial_if_safe(study_id, trial)
-                trials.append(trial)
-            else:
-                trials.append(cached_trial)
-
-        return trials
-
-    def _cache_trial_if_safe(self, study_id, trial):
-        # type: (int, structs.FrozenTrial) -> None
-
-        if trial.state is not structs.TrialState.RUNNING:
-            # We assume that the state of a finished trial is never updated anymore,
-            # so we can safely cache it.
-            self.finished_trial_cache.cache_trial(study_id, trial)
 
     def _get_all_trials_without_cache(self, study_id):
         # type: (int) -> List[structs.FrozenTrial]

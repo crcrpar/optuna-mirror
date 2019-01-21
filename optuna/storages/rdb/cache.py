@@ -1,69 +1,28 @@
 import copy
 from datetime import datetime
-from datetime import timedelta
-import heapq
+import threading
+from types import TracebackType  # NOQA
 from typing import Dict  # NOQA
 from typing import List  # NOQA
 from typing import Optional  # NOQA
 from typing import Tuple  # NOQA
+from typing import Type  # NOQA
 
 from optuna import structs  # NOQA
 
 
-class TrialCache(object):
+class TrialsCache(object):
     def __init__(self, cache_timeout=60):
         # type: (int) -> None
 
         self.cache_timeout = cache_timeout
         self.studies = {}  # type: Dict[int, StudyState]
-        self.timeout_queue = []  # type: List[Tuple[datetime, int]]
+        self.lock = threading.Lock()
 
-    def is_known_study(self, study_id):
-        # type: (int) -> bool
+    def lock_study(self, study_id):
+        # type: (int) -> LockedStudyCache
 
-        return study_id in self.studies
-
-    def remove_old_cache(self):
-        # type: () -> None
-
-        expiry_time = datetime.now() - timedelta(seconds=self.cache_timeout)
-        while len(self.timeout_queue) > 0 and self.timeout_queue[0][0] < expiry_time:
-            study_id = heapq.heappop(self.timeout_queue)[1]
-            last_access_time = self.studies[study_id].last_access_time
-            if last_access_time < expiry_time:
-                del self.studies[study_id]
-                continue
-
-            heapq.heappush(self.timeout_queue, (last_access_time, study_id))
-
-    def update_last_access_time(self, study_id):
-        # type: (int) -> None
-
-        if study_id not in self.studies:
-            heapq.heappush(self.timeout_queue, (datetime.now(), study_id))
-            self.studies[study_id] = StudyState()
-        else:
-            self.studies[study_id].last_access_time = datetime.now()
-
-    def find_cached_trial(self, study_id, trial_id):
-        # type: (int, int) -> Optional[structs.FrozenTrial]
-
-        if study_id not in self.studies:
-            return None
-
-        if trial_id not in self.studies[study_id].cached_trials:
-            return None
-
-        return copy.deepcopy(self.studies[study_id].cached_trials[trial_id])
-
-    def cache_trial(self, study_id, trial):
-        # type: (int, structs.FrozenTrial) -> None
-
-        if self.cache_timeout == 0:
-            return
-
-        trials = self.studies[study_id].cached_trials
-        trials[trial.trial_id] = copy.deepcopy(trial)
+        return LockedStudyCache(self, study_id)
 
 
 class StudyState(object):
@@ -72,3 +31,91 @@ class StudyState(object):
 
         self.last_access_time = datetime.now()
         self.cached_trials = {}  # type: Dict[int, structs.FrozenTrial]
+
+
+class LockedStudyCache(object):
+    def __init__(self, trials_cache, study_id):
+        # type: (TrialsCache, int) -> None
+
+        self.trials_cache = trials_cache
+        self.study_id = study_id
+
+    def __enter__(self):
+        # type: () -> LockedStudyCache
+
+        if self._is_cache_disabled():
+            return self
+
+        self.trials_cache.lock.__enter__()
+
+        if self.study_id not in self.trials_cache.studies:
+            self.trials_cache.studies[self.study_id] = StudyState()
+            self._set_old_study_remove_timer(self.trials_cache.cache_timeout)
+
+        return self
+
+    def __exit__(self, exception_type, exception_value, traceback):
+        # type: (Type[BaseException], Optional[Exception], TracebackType) -> None
+
+        if self._is_cache_disabled():
+            return
+
+        self._study().last_access_time = datetime.now()
+
+        self.trials_cache.lock.__exit__(exception_type, exception_value, traceback)
+
+    def empty(self):
+        # type: () -> bool
+
+        if self._is_cache_disabled():
+            return True
+
+        return len(self._study().cached_trials) == 0
+
+    def cache_trial_if_finished(self, trial):
+        # type: (structs.FrozenTrial) -> None
+
+        if self._is_cache_disabled():
+            return
+
+        if trial.state is not structs.TrialState.RUNNING:
+            # We assume that the state of a finished trial is never updated anymore,
+            # so we can safely cache it.
+            self._study().cached_trials[trial.trial_id] = copy.deepcopy(trial)
+
+    def find_cached_trial(self, trial_id):
+        # type: (int) -> Optional[structs.FrozenTrial]
+
+        if self._is_cache_disabled():
+            return None
+
+        return copy.deepcopy(self._study().cached_trials.get(trial_id))
+
+    def _study(self):
+        # type: () -> StudyState
+
+        return self.trials_cache.studies[self.study_id]
+
+    def _is_cache_disabled(self):
+        # type: () -> bool
+
+        return self.trials_cache.cache_timeout == 0
+
+    def _set_old_study_remove_timer(self, timeout):
+        # type: (float) -> None
+
+        timer = threading.Timer(timeout, lambda: self._remove_study_if_old())
+        timer.setDaemon(True)
+        timer.start()
+
+    def _remove_study_if_old(self):
+        # type: () -> None
+
+        now = datetime.now()
+        with self.trials_cache.lock:
+            elapsed = (now - self._study().last_access_time).total_seconds()
+            if elapsed >= self.trials_cache.cache_timeout:
+                del self.trials_cache.studies[self.study_id]
+            else:
+                timeout = self.trials_cache.cache_timeout - elapsed
+                self._set_old_study_remove_timer(timeout)
