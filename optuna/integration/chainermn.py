@@ -44,7 +44,10 @@ class ChainerMNObjectiveFunc(object):
         # type: (Trial) -> float
 
         self.comm.mpi_comm.bcast((True, trial.trial_id))
-        return self.objective(trial, self.comm)
+        try:
+            return self.objective(trial, self.comm)
+        finally:
+            self.comm.mpi_comm.barrier()
 
 
 class ChainerMNStudy(object):
@@ -124,7 +127,10 @@ class ChainerMNStudy(object):
                 if not has_next_trial:
                     break
                 trial = Trial(self.delegate, trial_id)
-                func(trial, self.comm)
+                try:
+                    func(trial, self.comm)
+                finally:
+                    self.comm.mpi_comm.barrier()
 
     def __getattr__(self, attr_name):
         return getattr(self.delegate, attr_name)
