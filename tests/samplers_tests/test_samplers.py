@@ -3,6 +3,8 @@ import pytest
 import typing  # NOQA
 
 import optuna
+from optuna.distributions import BaseDistribution  # NOQA
+from optuna.storages import BaseStorage  # NOQA
 
 
 parametrize_sampler = pytest.mark.parametrize(
@@ -65,3 +67,56 @@ def test_int(sampler_class):
     assert np.all(points <= 10)
     round_points = np.round(points)
     np.testing.assert_almost_equal(round_points, points)
+
+
+class BeforeAfterCheckSampler(optuna.samplers.BaseSampler):
+
+    def __init__(self):
+        # type: () -> None
+
+        self.before_call_count = 0
+        self.after_call_count = 0
+
+    def sample(self, storage, study_id, param_name, param_distribution):
+        # type: (BaseStorage, int, str, BaseDistribution) -> float
+
+        return 1.0
+
+    def before(self, trial_id):
+        # type: (int) -> None
+
+        self.before_call_count += 1
+
+    def after(self, trial_id):
+        # type: (int) -> None
+
+        self.after_call_count += 1
+
+
+@pytest.mark.parametrize('objective_args', [
+    (1.0, None),
+    (float('nan'), None),
+    (1.0, optuna.structs.TrialPruned()),
+    (1.0, ValueError())
+])
+def test_before_after(objective_args):
+    # type: (typing.Tuple[float, typing.Optional[Exception]]) -> None
+
+    def objective(_, return_value, exception):
+        # type: (optuna.trial.Trial, float, typing.Optional[Exception]) -> float
+
+        if exception is not None:
+            raise exception
+
+        return return_value
+
+    sampler = BeforeAfterCheckSampler()
+    study = optuna.create_study(sampler=sampler)
+
+    assert sampler.before_call_count == 0
+    assert sampler.after_call_count == 0
+
+    study._run_trial(lambda x: objective(x, *objective_args), catch=(Exception, ))
+
+    assert sampler.before_call_count == 1
+    assert sampler.after_call_count == 1

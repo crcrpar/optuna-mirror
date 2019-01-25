@@ -35,3 +35,13 @@ class BaseSampler(object):
         """
 
         raise NotImplementedError
+
+    def before(self, trial_id):
+        # type: (int) -> None
+
+        pass
+
+    def after(self, trial_id):
+        # type: (int) -> None
+
+        pass

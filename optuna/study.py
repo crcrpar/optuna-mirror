@@ -406,6 +406,7 @@ class Study(object):
         trial = trial_module.Trial(self, trial_id)
 
         try:
+            self.sampler.before(trial_id)
             result = func(trial)
         except structs.TrialPruned as e:
             message = 'Setting trial status as {}. {}'.format(
@@ -420,6 +421,8 @@ class Study(object):
             self.storage.set_trial_state(trial_id, structs.TrialState.FAIL)
             self.storage.set_trial_system_attr(trial_id, 'fail_reason', message)
             return trial
+        finally:
+            self.sampler.after(trial_id)
 
         try:
             result = float(result)
