@@ -187,6 +187,14 @@ class InMemoryStorage(base.BaseStorage):
 
         return self.trials[trial_id].params_in_internal_repr[param_name]
 
+    def get_trial_param_distribution(self, trial_id, param_name):
+        # type: (int, str) -> distributions.BaseDistribution
+
+        if param_name not in self.param_distribution:
+            raise ValueError('Trial {} does not have parameter {}.'.format(trial_id, param_name))
+
+        return self.param_distribution[param_name]
+
     def set_trial_value(self, trial_id, value):
         # type: (int, float) -> None
 

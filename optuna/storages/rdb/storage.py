@@ -312,6 +312,20 @@ class RDBStorage(BaseStorage):
 
         return trial_param.param_value
 
+    def get_trial_param_distribution(self, trial_id, param_name):
+        # type: (int, str) -> distributions.BaseDistribution
+
+        session = self.scoped_session()
+
+        trial = models.TrialModel.find_or_raise_by_id(trial_id, session)
+        trial_param = \
+            models.TrialParamModel.find_by_trial_and_param_name(trial, param_name, session)
+
+        if trial_param is None:
+            raise ValueError('Trial {} does not have parameter {}.'.format(trial_id, param_name))
+
+        return distributions.json_to_distribution(trial_param.distribution_json)
+
     def set_trial_value(self, trial_id, value):
         # type: (int, float) -> None
 

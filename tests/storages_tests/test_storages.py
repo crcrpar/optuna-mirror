@@ -507,6 +507,31 @@ def test_get_all_trials(storage_init_func):
 
 
 @parametrize_storage
+def test_get_trial_param_distribution(storage_init_func):
+    # type: (Callable[[], BaseStorage]) -> None
+
+    storage = storage_init_func()
+    study_id = storage.create_new_study_id()
+
+    trial = _create_new_trial_with_example_trial(
+        storage, study_id, EXAMPLE_DISTRIBUTIONS, EXAMPLE_TRIALS[0])
+
+    distribution_x = storage.get_trial_param_distribution(trial, 'x')
+    assert isinstance(distribution_x, UniformDistribution)
+    assert isinstance(EXAMPLE_DISTRIBUTIONS['x'], UniformDistribution)
+    assert distribution_x.low == EXAMPLE_DISTRIBUTIONS['x'].low
+    assert distribution_x.high == EXAMPLE_DISTRIBUTIONS['x'].high
+
+    distribution_y = storage.get_trial_param_distribution(trial, 'y')
+    assert isinstance(distribution_y, CategoricalDistribution)
+    assert isinstance(EXAMPLE_DISTRIBUTIONS['y'], CategoricalDistribution)
+    assert distribution_y.choices == EXAMPLE_DISTRIBUTIONS['y'].choices
+
+    with pytest.raises(ValueError):
+        storage.get_trial_param_distribution(trial, 'z')
+
+
+@parametrize_storage
 def test_get_n_trials(storage_init_func):
     # type: (Callable[[], BaseStorage]) -> None
 

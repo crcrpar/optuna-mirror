@@ -114,6 +114,12 @@ class BaseStorage(object):
         raise NotImplementedError
 
     @abc.abstractmethod
+    def get_trial_param_distribution(self, trial_id, param_name):
+        # type: (int, str) -> distributions.BaseDistribution
+
+        raise NotImplementedError
+
+    @abc.abstractmethod
     def set_trial_value(self, trial_id, value):
         # type: (int, float) -> None
 
