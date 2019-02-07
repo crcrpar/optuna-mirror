@@ -18,6 +18,7 @@ workflows:
             branches:
               only:
                 - master
+                - remove-numpy-workaround # TODO(ohta): Remove this line before merging
     jobs:
       - checks
       - document
