@@ -73,7 +73,6 @@ class Study(object):
 
         self.study_id = self.storage.get_study_id_from_name(study_name)
         self.logger = logging.get_logger(__name__)
-        self.save_distribution = True
 
         if direction == 'minimize':
             _direction = structs.StudyDirection.MINIMIZE

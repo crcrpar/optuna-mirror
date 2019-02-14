@@ -398,10 +398,6 @@ class Trial(BaseTrial):
         if not set_success:
             param_value_in_internal_repr = self.storage.get_trial_param(self.trial_id, name)
 
-        if self.study.save_distribution:
-            self.set_system_attr('dist/{}'.format(name),
-                                 distributions.distribution_to_json(distribution))
-
         param_value = distribution.to_external_repr(param_value_in_internal_repr)
         return param_value
 
@@ -576,7 +572,8 @@ class InjectedTrial(Trial):
             >>>
             >>> study = optuna.create_study()
             >>>
-            >>> result = objective(InjectedTrial(study, {'x': 1, 'y': 0}))
+            >>> trial = InjectedTrial(study, {'x': 1, 'y': 0})
+            >>> result = objective(trial)
             >>> trial.report(result)
             >>> study.storage.set_trial_state(trial.trial_id, optuna.structs.TrialState.COMPLETE)
 
