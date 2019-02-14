@@ -9,7 +9,6 @@ workflows:
       - tests-python37
       - tests-python36
       - tests-python35
-      - tests-python34
       - tests-python27
   daily-build:
     triggers:
@@ -25,12 +24,10 @@ workflows:
       - tests-python37
       - tests-python36
       - tests-python35
-      - tests-python34
       - tests-python27
       - examples-python37
       - examples-python36
       - examples-python35
-      - examples-python34
       - examples-python27
 
 jobs:
@@ -66,8 +63,8 @@ jobs:
           name: mypy
           command: |
             . venv/bin/activate
-            mypy --ignore-missing-imports .
-            mypy --py2 --ignore-missing-imports .
+            mypy --disallow-untyped-defs --ignore-missing-imports .
+            mypy --py2 --disallow-untyped-defs --ignore-missing-imports .
 
   document:
     docker:
@@ -145,12 +142,6 @@ jobs:
     steps:
       [checkout, run: *install, run: *keras-install, run: *tests, run: *tests-mn]
 
-  tests-python34:
-    docker:
-      - image: circleci/python:3.4
-    steps:
-      [checkout, run: *install, run: *keras-install, run: *tests, run: *tests-mn]
-
   tests-python27:
     docker:
       - image: circleci/python:2.7
@@ -172,6 +163,14 @@ jobs:
           command: |
             . venv/bin/activate
             pip install chainer lightgbm scikit-learn xgboost
+
+            # Using numpy-v1.16.0, the execution of `chainermn_simple.py` fails by memory shortage.
+            # To deal with this problem, we fix the version of numpy to v1.15.4.
+            #
+            # TODO(ohta):
+            # numpy-v1.16.1 may resolve this issue (https://github.com/numpy/numpy/pull/12624).
+            # Try the version when it is released.
+            pip install --force-reinstall numpy==1.15.4
 
       - run: &examples
           name: examples
@@ -203,12 +202,6 @@ jobs:
   examples-python35:
     docker:
       - image: circleci/python:3.5
-    steps:
-      [checkout, run: *install, run: *install-examples, run: *examples, run: *examples-mn]
-
-  examples-python34:
-    docker:
-      - image: circleci/python:3.4
     steps:
       [checkout, run: *install, run: *install-examples, run: *examples, run: *examples-mn]
 

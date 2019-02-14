@@ -18,13 +18,14 @@ from sklearn.model_selection import train_test_split
 import optuna
 
 
+# FYI: Objective functions can take additional arguments
+# (https://optuna.readthedocs.io/en/stable/faq.html#objective-func-additional-args).
 def objective(trial):
     data, target = sklearn.datasets.load_breast_cancer(return_X_y=True)
     train_x, test_x, train_y, test_y = train_test_split(data, target, test_size=0.25)
     dtrain = lgb.Dataset(train_x, label=train_y)
     dtest = lgb.Dataset(test_x, label=test_y)
 
-    num_round = trial.suggest_int('num_round', 1, 500)
     param = {'objective': 'binary', 'metric': 'binary_error', 'verbosity': -1,
              'boosting_type': trial.suggest_categorical('boosting', ['gbdt', 'dart', 'goss']),
              'num_leaves': trial.suggest_int('num_leaves', 10, 1000),
@@ -40,8 +41,8 @@ def objective(trial):
 
     # Add a callback for pruning.
     pruning_callback = optuna.integration.LightGBMPruningCallback(trial, 'binary_error')
-    gbm = lgb.train(param, dtrain, num_round, valid_sets=[dtest],
-                    verbose_eval=False, callbacks=[pruning_callback])
+    gbm = lgb.train(param, dtrain, valid_sets=[dtest], verbose_eval=False,
+                    callbacks=[pruning_callback])
 
     preds = gbm.predict(test_x)
     pred_labels = np.rint(preds)
