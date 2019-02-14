@@ -8,10 +8,10 @@ from optuna import distributions
 from optuna import samplers
 from optuna import storages
 from optuna.study import create_study
+from optuna.testing.storage import StorageSupplier
 from optuna.trial import FixedTrial
 from optuna.trial import InjectedTrial
 from optuna.trial import Trial
-from optuna.testing.storage import StorageSupplier
 
 STORAGE_MODES = [
     'none',    # We give `None` to storage argument, so InMemoryStorage is used.

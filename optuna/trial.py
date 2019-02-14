@@ -554,13 +554,13 @@ class FixedTrial(BaseTrial):
 
 class InjectedTrial(Trial):
 
-    """A trial class which inputs externally suggested parameters.
+    """A trial class which suggests parameter values determined externally.
 
      This object has the same methods as :class:`~optuna.trial.Trial`, and it suggests pre-defined
     parameter values, similarly to :class:`~optuna.trial.FixedTrial`. The parameter values can be
     determined at the construction of the :class:`~optuna.trial.InjectedTrial` object. In contrast
     to :class:`~optuna.trial.FixedTrial`, :class:`~optuna.trial.InjectedTrial` saves suggested
-    parameters to storage, and it is useful to inject externally suggested parameter sets to the
+    parameters to storage, and it is useful to inject externally determined parameter sets to the
     study.
 
     Example:
@@ -576,7 +576,7 @@ class InjectedTrial(Trial):
             >>>
             >>> study = optuna.create_study()
             >>>
-            >>> result = objective(InjectedTrial(study, trial_id, {'x': 1, 'y': 0}))
+            >>> result = objective(InjectedTrial(study, {'x': 1, 'y': 0}))
             >>> trial.report(result)
             >>> study.storage.set_trial_state(trial.trial_id, optuna.structs.TrialState.COMPLETE)
 
@@ -586,8 +586,6 @@ class InjectedTrial(Trial):
     Args:
         study:
             A :class:`~optuna.study.Study` object.
-        trial_id:
-            A trial ID that is automatically generated.
         params:
             A dictionary containing all parameters.
 
