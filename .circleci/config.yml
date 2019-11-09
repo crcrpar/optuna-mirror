@@ -299,6 +299,18 @@ jobs:
           environment:
             OMP_NUM_THREADS: 1
 
+      - run: &examples-visualization
+          name: examples-visualization
+          command: |
+            . venv/bin/activate
+            pip install jupyter notebook jupyter_contrib_extensions nbconvert plotly<4
+            for file in `find examples -name '*.ipynb'`
+              do
+                jupyter nbconvert --to notebook --execute $file
+              done
+          environment:
+            OMP_NUM_THREADS: 1
+
   examples-python36:
     docker:
       - image: circleci/python:3.6
