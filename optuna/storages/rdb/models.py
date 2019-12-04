@@ -235,7 +235,7 @@ class TrialUserAttributeModel(BaseModel):
         # type: (TrialModel, str, orm.Session) -> Optional[TrialUserAttributeModel]
 
         attribute = session.query(cls). \
-            filter(cls.trial_id == trial.trial_id).filter(cls.key == key).one_or_none()
+            filter(cls.trial_id == trial.number).filter(cls.key == key).one_or_none()
 
         return attribute
 
@@ -252,7 +252,7 @@ class TrialUserAttributeModel(BaseModel):
     def where_trial(cls, trial, session):
         # type: (TrialModel, orm.Session) -> List[TrialUserAttributeModel]
 
-        return cls.where_trial_id(trial.trial_id, session)
+        return cls.where_trial_id(trial.number, session)
 
     @classmethod
     def where_trial_id(cls, trial_id, session):
@@ -284,7 +284,7 @@ class TrialSystemAttributeModel(BaseModel):
         # type: (TrialModel, str, orm.Session) -> Optional[TrialSystemAttributeModel]
 
         attribute = session.query(cls). \
-            filter(cls.trial_id == trial.trial_id).filter(cls.key == key).one_or_none()
+            filter(cls.trial_id == trial.number).filter(cls.key == key).one_or_none()
 
         return attribute
 
@@ -301,7 +301,7 @@ class TrialSystemAttributeModel(BaseModel):
     def where_trial(cls, trial, session):
         # type: (TrialModel, orm.Session) -> List[TrialSystemAttributeModel]
 
-        return cls.where_trial_id(trial.trial_id, session)
+        return cls.where_trial_id(trial.number, session)
 
     @classmethod
     def where_trial_id(cls, trial_id, session):
@@ -353,7 +353,7 @@ class TrialParamModel(BaseModel):
         # type: (TrialModel, str, orm.Session) -> Optional[TrialParamModel]
 
         param_distribution = session.query(cls). \
-            filter(cls.trial_id == trial.trial_id). \
+            filter(cls.trial_id == trial.number). \
             filter(cls.param_name == param_name).one_or_none()
 
         return param_distribution
@@ -382,7 +382,7 @@ class TrialParamModel(BaseModel):
     def where_trial(cls, trial, session):
         # type: (TrialModel, orm.Session) -> List[TrialParamModel]
 
-        trial_params = session.query(cls).filter(cls.trial_id == trial.trial_id).all()
+        trial_params = session.query(cls).filter(cls.trial_id == trial.number).all()
 
         return trial_params
 
@@ -410,7 +410,7 @@ class TrialValueModel(BaseModel):
         # type: (TrialModel, int, orm.Session) -> Optional[TrialValueModel]
 
         trial_value = session.query(cls). \
-            filter(cls.trial_id == trial.trial_id). \
+            filter(cls.trial_id == trial.number). \
             filter(cls.step == step).one_or_none()
 
         return trial_value
@@ -428,7 +428,7 @@ class TrialValueModel(BaseModel):
     def where_trial(cls, trial, session):
         # type: (TrialModel, orm.Session) -> List[TrialValueModel]
 
-        trial_values = session.query(cls).filter(cls.trial_id == trial.trial_id).all()
+        trial_values = session.query(cls).filter(cls.trial_id == trial.number).all()
 
         return trial_values
 

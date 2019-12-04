@@ -412,29 +412,29 @@ class RDBStorage(BaseStorage):
             for param_name, param_value in template_trial.params.items():
                 distribution = template_trial.distributions[param_name]
                 param_value_in_internal_repr = distribution.to_internal_repr(param_value)
-                self._set_trial_param_without_commit(session, trial.trial_id, param_name,
+                self._set_trial_param_without_commit(session, trial.number, param_name,
                                                      param_value_in_internal_repr, distribution)
 
             for key, value in template_trial.user_attrs.items():
-                self._set_trial_user_attr_without_commit(session, trial.trial_id, key, value)
+                self._set_trial_user_attr_without_commit(session, trial.number, key, value)
 
             for key, value in template_trial.system_attrs.items():
                 if key == '_number':
                     continue
 
-                self._set_trial_system_attr_without_commit(session, trial.trial_id, key, value)
+                self._set_trial_system_attr_without_commit(session, trial.number, key, value)
 
             for step, intermediate_value in template_trial.intermediate_values.items():
-                self._set_trial_intermediate_value_without_commit(session, trial.trial_id, step,
+                self._set_trial_intermediate_value_without_commit(session, trial.number, step,
                                                                   intermediate_value)
 
             trial.state = template_trial.state
 
         self._commit(session)
 
-        self._create_new_trial_number(trial.trial_id)
+        self._create_new_trial_number(trial.number)
 
-        return trial.trial_id
+        return trial.number
 
     def _create_new_trial_number(self, trial_id):
         # type: (int) -> int
@@ -447,7 +447,7 @@ class RDBStorage(BaseStorage):
         # Terminate transaction explicitly to avoid connection timeout during transaction.
         self._commit(session)
 
-        self.set_trial_system_attr(trial.trial_id, '_number', trial_number)
+        self.set_trial_system_attr(trial.number, '_number', trial_number)
 
         return trial_number
 
@@ -725,7 +725,7 @@ class RDBStorage(BaseStorage):
 
         id_to_trial = {}
         for trial in trials:
-            id_to_trial[trial.trial_id] = trial
+            id_to_trial[trial.number] = trial
 
         id_to_params = defaultdict(list)  # type: Dict[int, List[models.TrialParamModel]]
         for param in trial_params:
