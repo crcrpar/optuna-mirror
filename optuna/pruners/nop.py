@@ -28,3 +28,9 @@ class NopPruner(BasePruner):
         """Please consult the documentation for :func:`BasePruner.prune`."""
 
         return False
+
+    def use_study_manager(self):
+        # type: () -> bool
+        """Return this pruner requires `StudyManager` or not."""
+
+        return False

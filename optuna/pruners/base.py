@@ -30,3 +30,10 @@ class BasePruner(object, metaclass=abc.ABCMeta):
         """
 
         raise NotImplementedError
+
+    @abc.abstractmethod
+    def use_study_manager(self):
+        # type: () -> bool
+        """Return this pruner requires `StudyManager` or not."""
+
+        raise NotImplementedError

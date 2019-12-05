@@ -37,3 +37,9 @@ class MedianPruner(PercentilePruner):
         # type: (int, int, int) -> None
 
         super(MedianPruner, self).__init__(50.0, n_startup_trials, n_warmup_steps, interval_steps)
+
+    def use_study_manager(self):
+        # type: () -> bool
+        """Return this pruner requires `StudyManager` or not."""
+
+        return False

@@ -17,5 +17,6 @@ from optuna.study import delete_study  # NOQA
 from optuna.study import get_all_study_summaries  # NOQA
 from optuna.study import load_study  # NOQA
 from optuna.study import Study  # NOQA
+from optuna.pruners.hyperband.study_manager import StudyManager  # NOQA
 from optuna.trial import Trial  # NOQA
 from optuna.version import __version__  # NOQA
