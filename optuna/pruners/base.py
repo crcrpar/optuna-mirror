@@ -37,3 +37,9 @@ class BasePruner(object, metaclass=abc.ABCMeta):
         """Return this pruner requires `StudyManager` or not."""
 
         raise NotImplementedError
+
+    def prepare_pruner_generator(self):
+        # type: () -> Optional[Callable[[int], pruners.BasePruner]]
+        """Prepare a pruner generator."""
+
+        return None

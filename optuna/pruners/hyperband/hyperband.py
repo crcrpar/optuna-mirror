@@ -1,7 +1,10 @@
 from optuna import type_checking
 from optuna import pruners
+from optuna.pruners.hyperband.pruner_generator import SuccessiveHalvingPrunerGenerator
 
 if type_checking.TYPE_CHECKING:
+    from typing import Optional  # NOQA
+
     from optuna import storages  # NOQA
     from optuna import Study  # NOQA
     from optuna.structs import FrozenTrial  # NOQA
@@ -18,6 +21,7 @@ class Hyperband(pruners.BasePruner):
             min_early_stopping_rate_high  # type: int
     ):
         # type: (...) -> None
+
         self._min_resource
         self._reduction_factor = reduction_factor
         self._min_early_stopping_rate_low = min_early_stopping_rate_low
@@ -32,46 +36,13 @@ class Hyperband(pruners.BasePruner):
 
         return False
 
-    def __iter__(self):
-        return self
+    def prepare_pruner_generator(self):
+        # type: () -> Optional[Callable[[int], pruners.BasePruner]]
+        """Prepare a pruner generator."""
 
-    def __next__(self):
-        if self._current_n_pruners == self._n_pruners:
-            raise StopIteration()
-
-        config = self._generate_bracket_config(self._current_n_pruners)
-        self._current_n_pruners == 1
-        return config
-
-    def _generate_bracket_config(self, bracket_index):
-        # type: (int) -> Dict[str, int]
-        """Returns dict that can be passed to SuccessiveHalvingPruner."""
-
-        self._current_resource_budget += self._get_resource_badget(bracket_index)
-        min_early_stopping_rate = self._min_early_stopping_rate_low + bracket_index
-
-        return {
-            'min_resource': self._min_resource,
-            'reduction_factor': self._reduction_factor,
-            'min_early_stopping_rate': min_early_stopping_rate,
-        }
-
-    def _get_resource_badget(self, pruner_index):
-        # type: (int) -> int
-        """Calculate budget for pruner of given index."""
-
-        n = self._reduction_factor ** self._n_pruners
-        budget = n
-        for i in range(pruner_index, self._n_pruners - 1):
-            budget += n / 2
-        return budget
-
-    def use_study_manager(self):
-        # type: () -> bool
-        """Return this pruner requires `StudyManager` or not."""
-
-        return False
-
-    @property
-    def current_resource_budget(self):
-        return self._current_resource_budget
+        return SuccessiveHalvingPrunerGenerator(
+            self._min_resource,
+            self._reduction_factor,
+            self._min_early_stopping_rate_low,
+            self._min_early_stopping_rate_high
+        )
