@@ -1,9 +1,10 @@
+from optuna import exceptions
 from optuna import logging
 from optuna.pruners import SuccessiveHalvingPruner
-from optuna import study as study_module
+from optuna import samplers
+from optuna.study import Study
 from optuna import storages
 from optuna import structs
-from optuna.pruners.hyperband.hyperband import Hyperband
 from optuna import type_checking
 
 if type_checking.TYPE_CHECKING:
@@ -20,20 +21,39 @@ _MINIMIZE = 'minimize'
 _MAXIMIZE = 'maximize'
 
 
-class StudyManager(object):
+# TOOD(crcrpar): Support `load_study`
+class StudyManager(study_module.BaseStudy):
 
-    """This class manages brackets."""
+    """A manager of studies.
 
-    # TOOD(crcrpar): Support `load_study`
-    def __init__(self, storage, direction, hyperband):
-        # type: (storages.BaseStorage, str, Hyperband) -> None
+    This objects manages some studies that use the same pruner with different configurations.
+    Initially this is implemented for Hyperband pruner that runs internally multiple
+    studies with SuccessiveHalving pruner.
+    """
 
-        self._storage = storage
+    def __init__(
+            self,
+            study_name,  # type: Optional[str]
+            storage,  # type: storages.BaseStorage
+            sampler,  # type: samplers.BaseSampler
+            direction,  # type: str
+            pruner_generator,  # type: Callable[[int], storages.BasePruner]
+            study_name_prefix  # type: str
+    ):
+        # type: (storages.BaseStorage, str, Hyperband, str) -> None
+
+        self.study_name = study_name
+        self._storage = storages.get_storage(storage)
         self._direction = direction
-        self._cmp_func = min if self._direction == _MINIMIZE else max
-        self._hyperband = hyperband
-        self._bracket_configs = []  # type:
-        self._studies = []  # type: List[study_module.Study]
+        self._sampler = sampler or samplers.TPESampler()
+        if self._direction == _MINIMIZE:
+            self._cmp_func = lambda t1, t2: t1.value > t2.value
+        else:
+            self._cmp_func = lambda t1, t2: t1.value < t2.value
+        self._pruner_generator = pruner_generator
+        self._study_name_prefix = study_name_prefix
+
+        self._studies = []  # type: List[Study]
 
     @property
     def best_params(self):
@@ -70,10 +90,16 @@ class StudyManager(object):
         """
 
         all_best_trials = [study.best_trial for study in self._studies]
-        return self._cmp_func(all_best_trials)
+        best_trial = all_best_trials[0]
+        if len(all_best_trials) == 1:
+            return best_trial
 
-    @property
-    def direction(self):
+        for trial in all_best_trials[1:]:
+            if self._cmp_func(best_trial, trial):
+                best_trial = trial
+        return best_trial
+
+    def _get_direction(self):
         # type: () -> structs.StudyDirection
         """Return the direction of the study.
 
@@ -98,8 +124,14 @@ class StudyManager(object):
         """
 
         all_studies_trials = [study.trials for study in self._studies]
-
         return [item for all_studies_trials in l for item in all_studies_trials]
+
+    @property
+    def studies(self):
+        # type: () -> List[Study]
+        """Return the list of finished :class:`~optuna.study.Study`\\s."""
+
+        return self._studies
 
     def optimize(
             self,
@@ -151,30 +183,49 @@ class StudyManager(object):
                 "Study with {} pruner requires either `n_trials` or `timeout`".format(
                     self.pruner_name))
 
-        n_trials_per_bracket = None if n_trials is None else n_trials // len(self._bracket_configs)
-        timeout_per_bracket = None if timeout is None else timeout // len(self._bracket_configs)
-        study_name_prefix = self.pruner_name if self.study_name is None else self.study_name
+        n_studies = len(self._pruner_generator)
+        n_trials_per_study = None if n_trials is None else n_trials // n_studies
+        timeout_per_study = None if timeout is None else timeout // n_studies
+        study_name_prefix = self._study_name_prefix if self.study_name is None else self.study_name
 
-        for bracket_index, bracket_config in enumerate(self._hyperband):
-            logger.info("Hyperband's {}th bracket start.".format(bracket_index))
-            postfix = '_bracket_{}'.format(bracket_id)
-            bracket_study_name = study_name_prefix + postfix
-            study = study_module.create_study(
-                storage=self._storage,
-                sampler=sampler,
-                pruner=SuccessiveHalvingPruner(**bracket_config),
-                study_name=bracket_study_name,
-                direction=self._direction,
-                load_if_exists=load_if_exists
-            )
+        for study_idx in range(len(self._pruner_generator)):
+            logger.info("{}'s {}th bracket start.".format(self._study_name_prefix, study_idx))
+
+            postfix = '_study_{}'.format(study_idx)
+            study_name = study_name_prefix + postfix
+
+            study = self._prepare_study(study_name, self._pruner_generator(study_idx))
             self._studies.append(study)
-
             study.optimize(
                 func=func,
-                n_trials=n_trials_per_bracket,
-                timeout=timeout_per_bracket,
+                n_trials=n_trials_per_study,
+                timeout=timeout_per_study,
                 n_jobs=n_jobs,
                 catch=catch,
                 callbacks=callbacks,
                 gc_after_trial=gc_after_trial
             )
+
+    def _prepare_study(self, study_name, pruner):
+        # type: (str, pruners.BasePruner) -> Study
+
+        try:
+            study_id = self._storage.create_new_study(study_name)
+        except exceptions.DuplicatedStudyError:
+            if load_if_exists:
+                logger.info("Using an existing study with name '{}' instead of "
+                            "creating a new one".format(sub_study_name))
+                study_id = storage.get_study_id_from_name(study_name)
+            else:
+                raise
+
+        study_name = storage.get_study_name_from_id(study_id)
+        study = Study(
+            study_name=study_name,
+            storage=storage,
+            sampler=sampler,
+            pruner=pruner
+        )
+
+        study._storage.set_study_direction(self._get_direction())
+        return study
