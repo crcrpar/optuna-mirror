@@ -40,7 +40,7 @@ class SuccessiveHalvingPrunerGenerator(object):
             A pruner whose configuration is up to `study_index`.
         """
 
-        min_early_stopping_rate = self._min_early_stopping_rate_low + bracket_index
+        min_early_stopping_rate = self._min_early_stopping_rate_low + study_index
 
         return pruners.SuccessiveHalvingPruner(
             min_resource=self._min_resource,
