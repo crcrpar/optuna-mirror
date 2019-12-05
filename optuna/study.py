@@ -38,7 +38,7 @@ if type_checking.TYPE_CHECKING:
     from typing import Union  # NOQA
 
     from optuna.distributions import BaseDistribution  # NOQA
-    from optuna.pruners.hyperband.study_manager import StudyManager  # NOQA
+    from optuna.study_manager import StudyManager  # NOQA
 
     ObjectiveFuncType = Callable[[trial_module.Trial], float]
 
@@ -602,7 +602,7 @@ def create_study(
         load_if_exists=False,  # type: bool
 ):
     # type: (...) -> Union[Study, StudyManager]
-    """Create a new :class:`~optuna.study.Study`.
+    """Create a new :class:`~optuna.study.Study` or :class:`~optuna.study_manager.StudyManager`.
 
     Args:
         storage:
@@ -642,11 +642,13 @@ def create_study(
             Otherwise, the creation of the study is skipped, and the existing one is returned.
 
     Returns:
-        A :class:`~optuna.study.Study` object.
+        A :class:`~optuna.study.Study` object or A :class:`~optuna.study_manager.StudyManager`.
+        This is up to which pruner you use.
 
     """
 
-    if not pruner.use_study_manager():
+    pruner_generator = pruner.prepare_pruner_generator()
+    if pruner_generator is not None:
         return _create_study(
             storage=storage,
             sampler=sampler,
@@ -656,7 +658,15 @@ def create_study(
             load_if_exists=load_if_exists,
         )
 
-    return pruner.create_study_manager()
+    return StudyManager(
+        study_name=study_name,
+        storage=storage,
+        sampler=sampler,
+        load_if_exists=load_if_exists,
+        direction=direction,
+        pruner_generator=pruner_generator,
+        study_name_prefix=pruner.__class__.__name__
+    )
 
 
 def _create_study(
@@ -668,49 +678,6 @@ def _create_study(
         load_if_exists=False,  # type: bool
 ):
     # type: (...) -> Study
-    """Create a new :class:`~optuna.study.Study`.
-
-    Args:
-        storage:
-            Database URL. If this argument is set to None, in-memory storage is used, and the
-            :class:`~optuna.study.Study` will not be persistent.
-
-            .. note::
-                When a database URL is passed, Optuna internally uses `SQLAlchemy`_ to handle
-                the database. Please refer to `SQLAlchemy's document`_ for further details.
-                If you want to specify non-default options to `SQLAlchemy Engine`_, you can
-                instantiate :class:`~optuna.storages.RDBStorage` with your desired options and
-                pass it to the ``storage`` argument instead of a URL.
-
-             .. _SQLAlchemy: https://www.sqlalchemy.org/
-             .. _SQLAlchemy's document:
-                 https://docs.sqlalchemy.org/en/latest/core/engines.html#database-urls
-             .. _SQLAlchemy Engine: https://docs.sqlalchemy.org/en/latest/core/engines.html
-
-        sampler:
-            A sampler object that implements background algorithm for value suggestion.
-            If :obj:`None` is specified, :class:`~optuna.samplers.TPESampler` is used
-            as the default. See also :class:`~optuna.samplers`.
-        pruner:
-            A pruner object that decides early stopping of unpromising trials. See also
-            :class:`~optuna.pruners`.
-        study_name:
-            Study's name. If this argument is set to None, a unique name is generated
-            automatically.
-        direction:
-            Direction of optimization. Set ``minimize`` for minimization and ``maximize`` for
-            maximization.
-        load_if_exists:
-            Flag to control the behavior to handle a conflict of study names.
-            In the case where a study named ``study_name`` already exists in the ``storage``,
-            a :class:`~optuna.exceptions.DuplicatedStudyError` is raised if ``load_if_exists`` is
-            set to :obj:`False`.
-            Otherwise, the creation of the study is skipped, and the existing one is returned.
-
-    Returns:
-        A :class:`~optuna.study.Study` object.
-
-    """
 
     storage = storages.get_storage(storage)
     try:
@@ -771,8 +738,16 @@ def load_study(
 
     """
 
-    if pruner is not None and pruner.use_study_manager():
-        raise ValueError('Cannot handle this')
+    if pruner.prepare_pruner_generator() is not None:
+        return StudyManager(
+            study_name=study_name,
+            storage=storage,
+            sampler=sampler,
+            load_if_exists=True,
+            direction='',
+            pruner_generator=pruner.prepare_pruner_generator(),
+            pruner_name=pruner.__class__.__name__
+        )
 
     return Study(study_name=study_name, storage=storage, sampler=sampler, pruner=pruner)
 

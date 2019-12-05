@@ -21,7 +21,6 @@ _MINIMIZE = 'minimize'
 _MAXIMIZE = 'maximize'
 
 
-# TOOD(crcrpar): Support `load_study`
 class StudyManager(study_module.BaseStudy):
 
     """A manager of studies.
@@ -29,6 +28,13 @@ class StudyManager(study_module.BaseStudy):
     This objects manages some studies that use the same pruner with different configurations.
     Initially this is implemented for Hyperband pruner that runs internally multiple
     studies with SuccessiveHalving pruner.
+
+    Args:
+        study_name:
+            The name of study. This is used as a prefix of each study's name.
+            If ``None``, `pruner_name` will be the prefix.
+        storage:
+
     """
 
     def __init__(
@@ -36,24 +42,48 @@ class StudyManager(study_module.BaseStudy):
             study_name,  # type: Optional[str]
             storage,  # type: storages.BaseStorage
             sampler,  # type: samplers.BaseSampler
+            load_if_exists,  # type: bool
             direction,  # type: str
             pruner_generator,  # type: Callable[[int], storages.BasePruner]
-            study_name_prefix  # type: str
+            pruner_name  # type: str
     ):
         # type: (storages.BaseStorage, str, Hyperband, str) -> None
 
+        assert load_if_exists or len(direction) > 0
         self.study_name = study_name
+        # N.B. (crcrpar): This is dummy for the consistency with `BaseStudy`.
+        self._study_id = -1
         self._storage = storages.get_storage(storage)
         self._direction = direction
         self._sampler = sampler or samplers.TPESampler()
         if self._direction == _MINIMIZE:
             self._cmp_func = lambda t1, t2: t1.value > t2.value
-        else:
+        elif self._direction = _MAXIMIZE:
             self._cmp_func = lambda t1, t2: t1.value < t2.value
         self._pruner_generator = pruner_generator
-        self._study_name_prefix = study_name_prefix
+        self._pruner_name = pruner_name
 
         self._studies = []  # type: List[Study]
+        self._prepare_all_studies(load_if_exists)
+
+        if len(self._direction) == 0:
+            raise ValueError("StudyManager is not set up correctly.")
+
+    def _prepare_all_studies(self, load_if_exists):
+        # type: (bool) -> None
+
+        n_studies = len(self._pruner_generator)
+        n_trials_per_study = None if n_trials is None else n_trials // n_studies
+        timeout_per_study = None if timeout is None else timeout // n_studies
+        pruner_name = self._pruner_name if self.study_name is None else self.study_name
+
+        for study_idx in range(len(self._pruner_generator)):
+            postfix = '_study_{}'.format(study_idx)
+            study_name = pruner_name + postfix
+
+            study = self._prepare_study(
+                study_name, self._pruner_generator(study_idx), load_if_exists)
+            self._studies.append(study)
 
     @property
     def best_params(self):
@@ -174,6 +204,7 @@ class StudyManager(study_module.BaseStudy):
                 memory is safely managed in your objective function.
         """
 
+
         if not isinstance(catch, tuple):
             raise TypeError("The catch argument is of type \'{}\' but must be a tuple.".format(
                 type(catch).__name__))
@@ -186,16 +217,11 @@ class StudyManager(study_module.BaseStudy):
         n_studies = len(self._pruner_generator)
         n_trials_per_study = None if n_trials is None else n_trials // n_studies
         timeout_per_study = None if timeout is None else timeout // n_studies
-        study_name_prefix = self._study_name_prefix if self.study_name is None else self.study_name
+        pruner_name = self._pruner_name if self.study_name is None else self.study_name
 
-        for study_idx in range(len(self._pruner_generator)):
-            logger.info("{}'s {}th bracket start.".format(self._study_name_prefix, study_idx))
+        for study_idx, study in enumerate(self.studies):
+            logger.info("{}'s {}th bracket start.".format(self._pruner_name, study_idx))
 
-            postfix = '_study_{}'.format(study_idx)
-            study_name = study_name_prefix + postfix
-
-            study = self._prepare_study(study_name, self._pruner_generator(study_idx))
-            self._studies.append(study)
             study.optimize(
                 func=func,
                 n_trials=n_trials_per_study,
@@ -206,8 +232,8 @@ class StudyManager(study_module.BaseStudy):
                 gc_after_trial=gc_after_trial
             )
 
-    def _prepare_study(self, study_name, pruner):
-        # type: (str, pruners.BasePruner) -> Study
+    def _prepare_study(self, study_name, pruner, load_if_exists):
+        # type: (str, pruners.BasePruner, bool) -> Study
 
         try:
             study_id = self._storage.create_new_study(study_name)
@@ -226,6 +252,14 @@ class StudyManager(study_module.BaseStudy):
             sampler=sampler,
             pruner=pruner
         )
+        if _load_if_exists and len(self._direction) == 0:
+            direction = study.direction
+            if direction == structs.StudyDirection.MINIMIZE:
+                self._direction = _MINIMIZE
+                self._cmp_func = lambda t1, t2: t1.value > t2.value
+            elif direction == structs.StudyDirection.MAXIMIZE:
+                self._direction = _MAXIMIZE
+                self._cmp_func = lambda t1, t2: t1.value < t2.value
 
         study._storage.set_study_direction(self._get_direction())
         return study
