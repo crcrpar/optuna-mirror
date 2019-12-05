@@ -146,12 +146,6 @@ class SuccessiveHalvingPruner(BasePruner):
 
         return value <= competing_values[promotable_idx]
 
-    def use_study_manager(self):
-        # type: () -> bool
-        """Return this pruner requires `StudyManager` or not."""
-
-        return False
-
 
 def _get_current_rung(trial):
     # type: (FrozenTrial) -> int

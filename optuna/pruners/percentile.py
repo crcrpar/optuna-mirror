@@ -150,9 +150,3 @@ class PercentilePruner(BasePruner):
         if direction == structs.StudyDirection.MAXIMIZE:
             return best_intermediate_result < p
         return best_intermediate_result > p
-
-    def use_study_manager(self):
-        # type: () -> bool
-        """Return this pruner requires `StudyManager` or not."""
-
-        return False
