@@ -3,6 +3,7 @@ from optuna import pruners
 from optuna.pruners.hyperband.pruner_generator import SuccessiveHalvingPrunerGenerator
 
 if type_checking.TYPE_CHECKING:
+    from typing import Callable  # NOQA
     from typing import Optional  # NOQA
 
     from optuna import storages  # NOQA
@@ -22,11 +23,11 @@ class Hyperband(pruners.BasePruner):
     ):
         # type: (...) -> None
 
-        self._min_resource
+        self._min_resource = min_resource
         self._reduction_factor = reduction_factor
         self._min_early_stopping_rate_low = min_early_stopping_rate_low
         self._min_early_stopping_rate_high = min_early_stopping_rate_high
-        self._n_pruners = _min_early_stopping_rate_high - _min_early_stopping_rate_low
+        self._n_pruners = self._min_early_stopping_rate_high - self._min_early_stopping_rate_low
         self._current_resource_budget = 0
         self._current_n_pruners = 0
 

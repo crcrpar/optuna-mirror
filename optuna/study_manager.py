@@ -1,7 +1,8 @@
 from optuna import exceptions
 from optuna import logging
-from optuna.pruners import SuccessiveHalvingPruner
+from optuna import pruners
 from optuna import samplers
+from optuna import study
 from optuna.study import Study
 from optuna import storages
 from optuna import structs
@@ -9,8 +10,12 @@ from optuna import type_checking
 
 if type_checking.TYPE_CHECKING:
     from typing import Any  # NOQA
+    from typing import Callable  # NOQA
     from typing import Dict  # NOQA
     from typing import List  # NOQA
+    from typing import Optional  # NOQA
+    from typing import Tuple  # NOQA
+    from typing import Union  # NOQA
 
     from optuna.trial import Trial  # NOQA
     ObjectiveFuncType = Callable[[Trial], float]
@@ -21,7 +26,7 @@ _MINIMIZE = 'minimize'
 _MAXIMIZE = 'maximize'
 
 
-class StudyManager(study_module.BaseStudy):
+class StudyManager(study.BaseStudy):
 
     """A manager of studies.
 
@@ -40,14 +45,14 @@ class StudyManager(study_module.BaseStudy):
     def __init__(
             self,
             study_name,  # type: Optional[str]
-            storage,  # type: storages.BaseStorage
-            sampler,  # type: samplers.BaseSampler
+            storage,  # type: Union[str, storages.BaseStorage, None]
+            sampler,  # type: Optional[samplers.BaseSampler]
             load_if_exists,  # type: bool
             direction,  # type: str
-            pruner_generator,  # type: Callable[[int], storages.BasePruner]
+            pruner_generator,  # type: pruners.PrunerGenerator
             pruner_name  # type: str
     ):
-        # type: (storages.BaseStorage, str, Hyperband, str) -> None
+        # type: (...) -> None
 
         assert load_if_exists or len(direction) > 0
         self.study_name = study_name
@@ -58,19 +63,18 @@ class StudyManager(study_module.BaseStudy):
         self._sampler = sampler or samplers.TPESampler()
         if self._direction == _MINIMIZE:
             self._cmp_func = lambda t1, t2: t1.value > t2.value
-        elif self._direction = _MAXIMIZE:
+        elif self._direction == _MAXIMIZE:
             self._cmp_func = lambda t1, t2: t1.value < t2.value
         self._pruner_generator = pruner_generator
         self._pruner_name = pruner_name
 
         self._studies = []  # type: List[Study]
-        self._prepare_all_studies(load_if_exists)
 
         if len(self._direction) == 0:
             raise ValueError("StudyManager is not set up correctly.")
 
-    def _prepare_all_studies(self, load_if_exists):
-        # type: (bool) -> None
+    def _prepare_all_studies(self, load_if_exists, n_trials=None, timeout=None):
+        # type: (bool, Optional[int], Optional[int]) -> None
 
         n_studies = len(self._pruner_generator)
         n_trials_per_study = None if n_trials is None else n_trials // n_studies
@@ -94,7 +98,7 @@ class StudyManager(study_module.BaseStudy):
             A dictionary containing parameters of the best trial.
         """
 
-        return self.best_trial.parms
+        return self.best_trial.params
 
     @property
     def best_value(self):
@@ -154,7 +158,10 @@ class StudyManager(study_module.BaseStudy):
         """
 
         all_studies_trials = [study.trials for study in self._studies]
-        return [item for all_studies_trials in l for item in all_studies_trials]
+        trials = []
+        for t in all_studies_trials:
+            trials.extend(t)
+        return trials
 
     @property
     def studies(self):
@@ -170,7 +177,7 @@ class StudyManager(study_module.BaseStudy):
             timeout=None,  # type: Optional[float]
             n_jobs=1,  # type: int
             catch=(),  # type: Union[Tuple[()], Tuple[Type[Exception]]]
-            callbacks=None,  # type: Optional[List[Callable[[Strudy, structs.FrozenTrial], None]]
+            callbacks=None,  # type: Optional[List[Callable[[Study, structs.FrozenTrial], None]]]
             gc_after_trial=True  # type: bool
     ):
         # type: (...) -> None
@@ -204,7 +211,6 @@ class StudyManager(study_module.BaseStudy):
                 memory is safely managed in your objective function.
         """
 
-
         if not isinstance(catch, tuple):
             raise TypeError("The catch argument is of type \'{}\' but must be a tuple.".format(
                 type(catch).__name__))
@@ -214,10 +220,7 @@ class StudyManager(study_module.BaseStudy):
                 "Study with {} pruner requires either `n_trials` or `timeout`".format(
                     self.pruner_name))
 
-        n_studies = len(self._pruner_generator)
-        n_trials_per_study = None if n_trials is None else n_trials // n_studies
-        timeout_per_study = None if timeout is None else timeout // n_studies
-        pruner_name = self._pruner_name if self.study_name is None else self.study_name
+        self._prepare_all_studies(load_if_exists, n_trials, timeout)
 
         for study_idx, study in enumerate(self.studies):
             logger.info("{}'s {}th bracket start.".format(self._pruner_name, study_idx))
@@ -245,14 +248,14 @@ class StudyManager(study_module.BaseStudy):
             else:
                 raise
 
-        study_name = storage.get_study_name_from_id(study_id)
+        study_name = self._storage.get_study_name_from_id(study_id)
         study = Study(
             study_name=study_name,
-            storage=storage,
-            sampler=sampler,
+            storage=self._storage,
+            sampler=self._sampler,
             pruner=pruner
         )
-        if _load_if_exists and len(self._direction) == 0:
+        if load_if_exists and len(self._direction) == 0:
             direction = study.direction
             if direction == structs.StudyDirection.MINIMIZE:
                 self._direction = _MINIMIZE
@@ -261,5 +264,5 @@ class StudyManager(study_module.BaseStudy):
                 self._direction = _MAXIMIZE
                 self._cmp_func = lambda t1, t2: t1.value < t2.value
 
-        study._storage.set_study_direction(self._get_direction())
+        study._storage.set_study_direction(study_id, self._get_direction())
         return study

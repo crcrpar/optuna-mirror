@@ -3,6 +3,9 @@ import abc
 from optuna.type_checking import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from typing import Callable  # NOQA
+    from typing import Optional  # NOQA
+
     from optuna.structs import FrozenTrial  # NOQA
     from optuna.study import Study  # NOQA
 
@@ -32,7 +35,7 @@ class BasePruner(object, metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     def prepare_pruner_generator(self):
-        # type: () -> Optional[Callable[[int], pruners.BasePruner]]
+        # type: () -> Optional[Callable[[int], BasePruner]]
         """Prepare a pruner generator."""
 
         return None

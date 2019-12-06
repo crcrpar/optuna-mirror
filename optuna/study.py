@@ -647,17 +647,18 @@ def create_study(
 
     """
 
-    pruner_generator = pruner.prepare_pruner_generator()
-    if pruner_generator is not None:
+    if pruner is None or pruner.prepare_pruner_generator() is None:
         return _create_study(
             storage=storage,
             sampler=sampler,
             pruner=pruner,
-            study_name=study_name
+            study_name=study_name,
             direction=direction,
             load_if_exists=load_if_exists,
         )
 
+    pruner_generator = pruner.prepare_pruner_generator()
+    assert pruner_generator is not None
     return StudyManager(
         study_name=study_name,
         storage=storage,
@@ -665,7 +666,7 @@ def create_study(
         load_if_exists=load_if_exists,
         direction=direction,
         pruner_generator=pruner_generator,
-        study_name_prefix=pruner.__class__.__name__
+        pruner_name=pruner.__class__.__name__
     )
 
 
@@ -738,14 +739,16 @@ def load_study(
 
     """
 
-    if pruner.prepare_pruner_generator() is not None:
+    if pruner is not None and pruner.prepare_pruner_generator() is not None:
+        pruner_generator = pruner.prepare_pruner_generator()
+        assert pruner_generator is not None
         return StudyManager(
             study_name=study_name,
             storage=storage,
             sampler=sampler,
             load_if_exists=True,
             direction='',
-            pruner_generator=pruner.prepare_pruner_generator(),
+            pruner_generator=pruner_generator,
             pruner_name=pruner.__class__.__name__
         )
 

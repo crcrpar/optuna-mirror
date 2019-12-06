@@ -5,7 +5,7 @@ if type_checking.TYPE_CHECKING:
     from optuna.structs import FrozenTrial  # NOQA
 
 
-class SuccessiveHalvingPrunerGenerator(object):
+class SuccessiveHalvingPrunerGenerator(PrunerGenerator):
     """Generator of SuccessiveHalving pruner for Hyperband."""
 
     def __init__(
@@ -21,7 +21,7 @@ class SuccessiveHalvingPrunerGenerator(object):
         self.reduction_factor = reduction_factor
         self.min_early_stopping_rate_low = min_early_stopping_rate_low
         self.min_early_stopping_rate_high = min_early_stopping_rate_high
-        self.n_pruners = _min_early_stopping_rate_high - _min_early_stopping_rate_low
+        self.n_pruners = self.min_early_stopping_rate_high - self.min_early_stopping_rate_low
 
     def __len__(self):
         # type: () -> int
@@ -29,7 +29,7 @@ class SuccessiveHalvingPrunerGenerator(object):
         return self.n_pruners
 
     def __call__(self, study_index):
-        # type: (int) -> pruners.SuccessiveHalving
+        # type: (int) -> pruners.SuccessiveHalvingPruner
         """Create a pruner according to the given index of study.
 
         Args:
@@ -40,10 +40,10 @@ class SuccessiveHalvingPrunerGenerator(object):
             A pruner whose configuration is up to `study_index`.
         """
 
-        min_early_stopping_rate = self._min_early_stopping_rate_low + study_index
+        min_early_stopping_rate = self.min_early_stopping_rate_low + study_index
 
         return pruners.SuccessiveHalvingPruner(
-            min_resource=self._min_resource,
-            reduction_factor=self._reduction_factor,
+            min_resource=self.min_resource,
+            reduction_factor=self.reduction_factor,
             min_early_stopping_rate=min_early_stopping_rate
         )
