@@ -362,7 +362,7 @@ class Study(BaseStudy):
     def trials_dataframe(
         self,
         attrs=('number', 'value', 'datetime_start', 'datetime_complete', 'params', 'user_attrs',
-               'system_attrs', 'state'),  # type: Tuple[str, ...]
+               'system_attrs', 'state', 'duration'),  # type: Tuple[str, ...]
         multi_index=False  # type: bool
     ):
         # type: (...) -> pd.DataFrame

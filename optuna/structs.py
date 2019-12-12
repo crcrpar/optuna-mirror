@@ -212,6 +212,18 @@ class FrozenTrial(object):
         self._distributions = value
 
     @property
+    def duration(self):
+        # type: () -> float
+        """Duration of trial in seconds."""
+        if self.datetime_start is None:
+            raise RuntimeError('`datetime_start` is `None`.')
+        if self.datetime_complete is None:
+            raise RuntimeError('`datetime_complete` is `None`.')
+
+        delta = self.datetime_complete - self.datetime_start
+        return delta.total_seconds()
+
+    @property
     def trial_id(self):
         # type: () -> int
         """Return the trial ID.
