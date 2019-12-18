@@ -190,6 +190,13 @@ class FrozenTrial(object):
                     format(param_value, param_name, distribution))
 
     @property
+    def arm(self):
+        # type: () -> str
+        """Return the arm for this trial."""
+
+        return self.system_attrs['arm']
+
+    @property
     def distributions(self):
         # type: () -> Dict[str, BaseDistribution]
         """Return the distributions for this trial.

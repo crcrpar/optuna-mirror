@@ -114,8 +114,8 @@ class BaseStudy(object):
 
         return self.get_trials()
 
-    def get_trials(self, deepcopy=True):
-        # type: (bool) -> List[structs.FrozenTrial]
+    def get_trials(self, deepcopy=True, arm='default'):
+        # type: (bool, str) -> List[structs.FrozenTrial]
         """Return all trials in the study.
 
         The returned trials are ordered by trial number.
@@ -129,12 +129,16 @@ class BaseStudy(object):
                 Note that if you set the flag to :obj:`False`, you shouldn't mutate
                 any fields of the returned trial. Otherwise the internal state of
                 the study may corrupt and unexpected behavior may happen.
+            arm:
+                The arm of trials.
 
         Returns:
             A list of :class:`~optuna.structs.FrozenTrial` objects.
         """
 
-        return self._storage.get_all_trials(self._study_id, deepcopy=deepcopy)
+        trials = self._storage.get_all_trials(self._study_id, deepcopy=deepcopy)
+
+        return [t for t in trials if t.system_attrs['arm'] == arm]
 
     @property
     def storage(self):
@@ -563,6 +567,7 @@ class Study(BaseStudy):
 
         trial_id = self._storage.create_new_trial(self._study_id)
         trial = trial_module.Trial(self, trial_id)
+        trial.set_arm(self._get_arm(trial))
         trial_number = trial.number
 
         try:
@@ -626,6 +631,11 @@ class Study(BaseStudy):
         _logger.info('Finished trial#{} resulted in value: {}. '
                      'Current best value is {} with parameters: {}.'.format(
                          trial_number, value, self.best_value, self.best_params))
+
+    def _get_arm(self, trial):
+        # type: (trial_module.Trial) -> str
+
+        return 'default'
 
 
 def create_study(

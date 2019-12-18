@@ -134,6 +134,8 @@ class Trial(BaseTrial):
         self.storage = self.study._storage
         self.logger = logging.get_logger(__name__)
 
+        self._arm = None  # type: Optional[str]
+
         self._init_relative_params()
 
     def _init_relative_params(self):
@@ -515,6 +517,21 @@ class Trial(BaseTrial):
         param_value = self.relative_params[name]
         param_value_in_internal_repr = distribution.to_internal_repr(param_value)
         return distribution._contains(param_value_in_internal_repr)
+
+    def set_arm(self, arm='default'):
+        # type: (str) -> None
+        """Register trial to the given arm."""
+
+        self._arm = arm
+        self.set_system_attr('arm', arm)
+
+    @property
+    def arm(self):
+        # type: () -> str
+        """Return the arm of this trial."""
+
+        assert self._arm is not None
+        return self._arm
 
     @property
     def number(self):
