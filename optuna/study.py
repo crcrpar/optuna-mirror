@@ -681,6 +681,11 @@ def create_study(
 
     """
 
+    if isinstance(pruner, pruners.HyperbandPruner):
+        if sampler is None or isinstance(sampler, samplers.TPESampler):
+            msg = 'Currently `HyperbanPruner` does not work well with `TPESampler`.'
+            warnings.warn(msg, UserWarning)
+
     storage = storages.get_storage(storage)
     try:
         study_id = storage.create_new_study(study_name)
