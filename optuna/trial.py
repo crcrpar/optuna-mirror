@@ -634,17 +634,18 @@ class FixedTrial(BaseTrial):
 
     Example:
 
-        Evaluate an objective function with parameter values given by a user:
+        .. testcode::
 
-        .. code::
+            from optuna.trial import FixedTrial
 
-            >>> def objective(trial):
-            >>>     x = trial.suggest_uniform('x', -100, 100)
-            >>>     y = trial.suggest_categorical('y', [-1, 0, 1])
-            >>>     return x ** 2 + y
-            >>>
-            >>> objective(FixedTrial({'x': 1, 'y': 0}))
-            1
+            def objective(trial):
+                x = trial.suggest_uniform('x', -100, 100)
+                y = trial.suggest_categorical('y', [-1, 0, 1])
+                return x ** 2 + y
+
+            # Evaluate the above `objective` with the below values.
+            evaluated_value = objective(FixedTrial({'x': 1, 'y': 0}))
+            assert evaluated_value == 1
 
     .. note::
         Please refer to :class:`~optuna.trial.Trial` for details of methods and properties.
