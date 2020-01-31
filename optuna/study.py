@@ -20,6 +20,7 @@ except ImportError as e:
 
 from optuna import exceptions
 from optuna import logging
+from optuna import parallel_utils
 from optuna import progress_bar as pbar_module
 from optuna import pruners
 from optuna import samplers
@@ -324,7 +325,13 @@ class Study(BaseStudy):
                     # The following expression makes an iterator that never ends.
                     _iter = iter(int, 1)
 
-                with Parallel(n_jobs=n_jobs, prefer="threads") as parallel:
+                prefer = 'threads'
+                if show_progress_bar:
+                    active_backend = joblib.parallel.get_active_backend(prefer=prefer)
+                    parallel_utils.register_parallel_backend(active_backend)
+                    prefer = parallel_utils.get_prefer(active_backend)
+
+                with Parallel(n_jobs=n_jobs, prefer=prefer) as parallel:
                     if not isinstance(parallel._backend, joblib.parallel.ThreadingBackend) and \
                        show_progress_bar:
                         msg = (
@@ -346,10 +353,7 @@ class Study(BaseStudy):
 
                     parallel(
                         delayed(self._optimize_sequential)
-                        (
-                            func, 1, timeout, catch, callbacks, gc_after_trial,
-                            time_start, progress_bar
-                        )
+                        (func, 1, timeout, catch, callbacks, gc_after_trial, time_start)
                         for _ in _iter
                     )
         finally:
@@ -540,9 +544,8 @@ class Study(BaseStudy):
             callbacks,  # type: Optional[List[Callable[[Study, structs.FrozenTrial], None]]]
             gc_after_trial,  # type: bool
             time_start,  # type: Optional[datetime.datetime]
-            progress_bar  # type: pbar_module._ProgressBar
     ):
-        # type: (...) -> None
+        # type: (...) -> Optional[float]
 
         i_trial = 0
 
@@ -561,10 +564,11 @@ class Study(BaseStudy):
                 if elapsed_seconds >= timeout:
                     break
 
-            self._run_trial_and_callbacks(func, catch, callbacks, gc_after_trial, progress_bar)
+            self._run_trial_and_callbacks(func, catch, callbacks, gc_after_trial)
 
-            progress_bar.update(elapsed_seconds)
         self._storage.remove_session()
+
+        return elapsed_seconds
 
     def _run_trial_and_callbacks(
             self,
@@ -572,11 +576,10 @@ class Study(BaseStudy):
             catch,  # type: Union[Tuple[()], Tuple[Type[Exception]]]
             callbacks,  # type: Optional[List[Callable[[Study, structs.FrozenTrial], None]]]
             gc_after_trial,  # type: bool
-            progress_bar  # type: pbar_module._ProgressBar
     ):
         # type: (...) -> None
 
-        trial = self._run_trial(func, catch, gc_after_trial, progress_bar)
+        trial = self._run_trial(func, catch, gc_after_trial)
         if callbacks is not None:
             frozen_trial = self._storage.get_trial(trial._trial_id)
             for callback in callbacks:
@@ -587,7 +590,6 @@ class Study(BaseStudy):
             func,  # type: ObjectiveFuncType
             catch,  # type: Union[Tuple[()], Tuple[Type[Exception]]]
             gc_after_trial,  # type: bool
-            progress_bar  # type: pbar_module._ProgressBar
     ):
         # type: (...) -> trial_module.Trial
 
@@ -646,7 +648,7 @@ class Study(BaseStudy):
 
         trial.report(result)
         self._storage.set_trial_state(trial_id, structs.TrialState.COMPLETE)
-        self._log_completed_trial(trial_number, result, progress_bar)
+        self._log_completed_trial(trial_number, result)
 
         return trial
 
