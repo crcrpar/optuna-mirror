@@ -236,7 +236,7 @@ class DiscreteUniformDistribution(BaseDistribution):
         # type: (float) -> bool
 
         value = param_value_in_internal_repr
-        return self.low <= value and value <= self.high
+        return self.low <= value <= self.high
 
 
 class IntUniformDistribution(BaseDistribution):
