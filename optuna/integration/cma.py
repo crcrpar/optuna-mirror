@@ -8,6 +8,7 @@ from optuna import distributions
 from optuna.distributions import CategoricalDistribution
 from optuna.distributions import DiscreteUniformDistribution
 from optuna.distributions import IntUniformDistribution
+from optuna.distributions import IntLogUniformDistribution
 from optuna.distributions import LogUniformDistribution
 from optuna.distributions import UniformDistribution
 from optuna.samplers import BaseSampler
@@ -227,6 +228,10 @@ class CmaEsSampler(BaseSampler):
                 x0[name] = numpy.mean([distribution.high, distribution.low])
             elif isinstance(distribution, IntUniformDistribution):
                 x0[name] = int(numpy.mean([distribution.high, distribution.low]))
+            elif isinstance(distribution, IntLogUniformDistribution):
+                log_high = math.log(distribution.high)
+                log_low = math.log(distribution.low)
+                x0[name] = int(math.exp(numpy.mean([log_high, log_low])))
             elif isinstance(distribution, LogUniformDistribution):
                 log_high = math.log(distribution.high)
                 log_low = math.log(distribution.low)
@@ -252,6 +257,10 @@ class CmaEsSampler(BaseSampler):
                 sigma0s.append((distribution.high - distribution.low) / 6)
             elif isinstance(distribution, IntUniformDistribution):
                 sigma0s.append((distribution.high - distribution.low) / 6)
+            elif isinstance(distribution, IntLogUniformDistribution):
+                log_high = math.log(distribution.high)
+                log_low = math.log(distribution.low)
+                sigma0s.append((log_high - log_low) / 6)
             elif isinstance(distribution, LogUniformDistribution):
                 log_high = math.log(distribution.high)
                 log_low = math.log(distribution.low)
