@@ -42,14 +42,16 @@ class MultiObjectiveTrial(object):
         # See also: https://github.com/optuna/optuna/pull/1054/files#r407982636
         self._n_objectives = multi_objective.study.MultiObjectiveStudy(trial.study).n_objectives
 
-    def suggest_float(self, name: str, low: float, high: float, *, log: bool = False) -> float:
+    def suggest_float(
+            self, name: str, low: float, high: float, *, log: bool = False, step: Optional[float] = None
+    ) -> float:
         """Suggest a value for the floating point parameter.
 
         Please refer to the documentation of :func:`optuna.trial.Trial.suggest_float`
         for further details.
         """
 
-        return self._trial.suggest_float(name, low, high, log=log)
+        return self._trial.suggest_float(name, low, high, log=log, step=step)
 
     def suggest_uniform(self, name: str, low: float, high: float) -> float:
         """Suggest a value for the continuous parameter.
@@ -78,14 +80,14 @@ class MultiObjectiveTrial(object):
 
         return self._trial.suggest_discrete_uniform(name, low, high, q)
 
-    def suggest_int(self, name: str, low: int, high: int) -> int:
+    def suggest_int(self, name: str, low: int, high: int, log: bool = False, step: int = 1) -> int:
         """Suggest a value for the integer parameter.
 
         Please refer to the documentation of :func:`optuna.trial.Trial.suggest_int`
         for further details.
         """
 
-        return self._trial.suggest_int(name, low, high)
+        return self._trial.suggest_int(name, low, high, log, step)
 
     def suggest_categorical(
         self, name: str, choices: Sequence[CategoricalChoiceType]
