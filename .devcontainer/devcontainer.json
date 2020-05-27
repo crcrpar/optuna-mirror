@@ -32,6 +32,8 @@
 		"python.linting.pylintEnabled": false,
 		"python.linting.flake8Enabled": true,
 		"python.linting.mypyEnabled": true,
+		"python.linting.lintOnSave": true,
+		"python.formatting.provider": "black",
 	},
 
 	// Use 'appPort' to create a container with published ports. If the port isn't working, be sure
