@@ -19,8 +19,8 @@ We have the following two ways to execute this example:
 """
 
 import os
-import shutil
 import random
+import shutil
 
 import allennlp
 import allennlp.data
@@ -29,8 +29,8 @@ import allennlp.modules
 import numpy
 import torch
 
-from optuna.integration.allennlp import AllenNLPPruningCallback
 import optuna
+from optuna.integration import AllenNLPPruningCallback
 
 
 DEVICE = -1  # If you want to use GPU, use DEVICE = 0.

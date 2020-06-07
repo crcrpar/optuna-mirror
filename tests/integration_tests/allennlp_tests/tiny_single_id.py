@@ -1,11 +1,11 @@
+import itertools
 from typing import Dict
 from typing import List
-import itertools
 
-from allennlp.data.vocabulary import Vocabulary
-from allennlp.data.tokenizers.token import Token
-from allennlp.data.token_indexers.token_indexer import TokenIndexer
 from allennlp.data.token_indexers.token_indexer import IndexedTokenList
+from allennlp.data.token_indexers.token_indexer import TokenIndexer
+from allennlp.data.tokenizers.token import Token
+from allennlp.data.vocabulary import Vocabulary
 
 
 @TokenIndexer.register("tiny_single_id")

@@ -5,7 +5,6 @@ from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Union
-import warnings
 
 import optuna
 from optuna._experimental import experimental
@@ -15,9 +14,11 @@ with try_import() as _imports:
     import allennlp
     import allennlp.commands
     import allennlp.common.util
+    from allennlp.training import EpochCallback
 
 if _imports.is_successful():
     import _jsonnet
+    EpochCallback = object  # NOQA
 
 
 def dump_best_config(input_config_file: str, output_config_file: str, study: optuna.Study) -> None:
@@ -131,7 +132,7 @@ class AllenNLPExecutor(object):
 
 
 @experimental("2.0.0")
-class AllenNLPPruningCallback(allennlp.training.EpochCallback):
+class AllenNLPPruningCallback(EpochCallback):
     """AllenNLP callback to prune unpromising trials.
 
     See `the example <https://github.com/optuna/optuna/blob/master/
