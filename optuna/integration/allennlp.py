@@ -12,6 +12,7 @@ from optuna._experimental import experimental
 from optuna._imports import try_import
 
 with try_import() as _imports:
+    import allennlp
     import allennlp.commands
     import allennlp.common.util
 
@@ -118,7 +119,6 @@ class AllenNLPExecutor(object):
             import_func = allennlp.common.util.import_submodules
         except AttributeError:
             import_func = allennlp.common.util.import_module_and_submodules
-            warnings.warn("AllenNLP>0.9 has not been supported officially yet.")
 
         for package_name in self._include_package:
             import_func(package_name)
@@ -149,6 +149,9 @@ class AllenNLPPruningCallback(allennlp.training.EpochCallback):
 
     def __init__(self, trial: optuna.trial.Trial, monitor: str):
         _imports.check()
+
+        if allennlp.__version__ < '1.0.0':
+            raise Exception("AllenNLPPruningCallback requires `allennlp`>=1.0.0.")
 
         self._trial = trial
         self._monitor = monitor
