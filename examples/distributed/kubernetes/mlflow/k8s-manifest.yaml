@@ -76,7 +76,7 @@ spec:
           imagePullPolicy: IfNotPresent
           command:
             - python
-            - tf_keras_distributed.py
+            - keras_distributed.py
           envFrom:
             - secretRef:
                 name: postgres-secrets
