@@ -163,7 +163,10 @@ class AllenNLPPruningCallback(EpochCallback):
         trainer: "allennlp.training.GradientDescentTrainer",
         metrics: Dict[str, Any],
         epoch: int,
+        is_master: bool,
     ) -> None:
+        if not is_master:
+            return
         value = metrics.get(self._monitor)
         if not value:
             return
