@@ -115,19 +115,10 @@ spec:
             - secretRef:
                 name: postgres-secrets
         - name: start-mlflow-server
-          image: optuna-kubernetes:example
+          image: mlflow:server
           imagePullPolicy: IfNotPresent
-          command:
-          - /bin/sh
-          - -c
-          - -e
-          - -x
-          - mkdir -p ${FILE_DIR}
-          - mlflow
-          - server
-          - --backend-store-uri postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_MLFLOW_DB}
-          - --host 0.0.0.0
-          - --port 5000
+          command: ["/bin/sh"]
+          args: ["run_mlflow.sh"]
 
       containers:
         - name: worker
