@@ -50,43 +50,6 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: postgres-mlflow
-spec:
-  type: ClusterIP
-  selector:
-    app: postgres-mlflow
-  ports:
-    - port: 5432
----
-apiVersion: apps/v1
-kind: StatefulSet
-metadata:
-  name: postgres-mlflow
-  labels:
-    app: postgres-mlflow
-spec:
-  selector:
-    matchLabels:
-      app: postgres-mlflow
-  serviceName: postgres-mlflow
-  template:
-    metadata:
-      labels:
-        app: postgres-mlflow
-    spec:
-      containers:
-        - name: postgres-mlflow
-          image: postgres:latest
-          imagePullPolicy: IfNotPresent
-          envFrom:
-            - secretRef:
-                name: postgres-secrets
-          ports:
-            - containerPort: 5432
----
-apiVersion: v1
-kind: Service
-metadata:
   name: mlflow-server
 spec:
   type: ClusterIP
@@ -120,6 +83,12 @@ spec:
                 name: postgres-secrets
           ports:
             - containerPort: 5000
+          env:
+          - name: FILE_DIR
+            value: /mnt/mlflow
+          volumeMounts:
+          - mountPath: /mnt/mlflow
+            name: mlflow-storage
 ---
 apiVersion: batch/v1
 kind: Job
@@ -149,10 +118,17 @@ spec:
           image: optuna-kubernetes:example
           imagePullPolicy: IfNotPresent
           command:
+          - /bin/sh
+          - -c
+          - -e
+          - -x
+          - mkdir -p ${FILE_DIR}
           - mlflow
           - server
-          - --backend-store-uri postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@postgres:5432/$(POSTGRES_MLFLOW_DB)
+          - --backend-store-uri postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_MLFLOW_DB}
           - --host 0.0.0.0
+          - --port 5000
+
       containers:
         - name: worker
           image: optuna-kubernetes:example
