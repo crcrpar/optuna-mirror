@@ -59,25 +59,27 @@ jobs:
 
         for file in `echo ${{ steps.files.outputs.all }} | grep -vE "$IGNORES"`
         do
-          if [[ $file =~ examples/**/*.py ]]; then
-            echo $file
-            python $file > /dev/null
-            if grep -e '\-\-pruning' $file > /dev/null; then
-              echo $file --pruning
-              python $file --pruning > /dev/null
-            fi
-          fi
+          case $file in
+            examples/**/*.py)
+              echo $file
+              python $file > /dev/null
+              if grep -e '\-\-pruning' $file > /dev/null; then
+                echo $file --pruning
+                python $file --pruning > /dev/null
+              fi ;;
+          esac
         done
     - name: run changed multi-node examples
       run: |
         STORAGE_URL=sqlite:///example.db
         for file in `echo ${{ steps.files.outputs.all }} | grep -vE "$IGNORES"`
         do
-          if [[ $file =~ examples/**/*.py ]]; then
-            echo $file
-            STUDY_NAME=`optuna create-study --storage $STORAGE_URL`
-            mpirun -n 2 -- python $file $STUDY_NAME $STORAGE_URL > /dev/null
-          fi
+          case $file in
+            examples/**/*.py)
+              echo $file
+              STUDY_NAME=`optuna create-study --storage $STORAGE_URL`
+              mpirun -n 2 -- python $file $STUDY_NAME $STORAGE_URL > /dev/null
+          esac
         done
       env:
         OMP_NUM_THREADS: 1
