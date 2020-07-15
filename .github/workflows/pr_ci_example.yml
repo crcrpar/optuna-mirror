@@ -41,6 +41,8 @@ jobs:
 
         # Install all dependencies needed for examples.
         pip install --progress-bar off $(ls dist/*.tar.gz)[example] -f https://download.pytorch.org/whl/torch_stable.html
+    - id: files
+      uses: jitterbit/get-changed-files@v1
     - name: run changed examples
       env:
         OMP_NUM_THREADS: 1
@@ -53,23 +55,27 @@ jobs:
           IGNORES='chainermn_.*'
         fi
 
-        for file in $(git --no-pager diff --name-only FETCH_HEAD $(git merge-base FETCH_HEAD master))
+        for file in ${{ steps.files.outputs.all }}
         do
           echo $file
-          python $file > /dev/null
-          if grep -e '\-\-pruning' $file > /dev/null; then
-            echo $file --pruning
-            python $file --pruning > /dev/null
+          if [[ $file == "**/examples/**/*.py" ]]; then
+            python $file ? /dev/null
+            if grep -e '\-\-pruning' $file > /dev/null; then
+              echo $file --pruning
+              python $file --pruning > /dev/null
+            fi
           fi
         done
     - name: run changed multi-node examples
       run: |
         STORAGE_URL=sqlite:///example.db
-        for file in $(git --no-pager diff --name-only FETCH_HEAD $(git merge-base FETCH_HEAD master))
+        for file in ${{ steps.files.outputs.all }}
         do
           echo $file
-          STUDY_NAME=`optuna create-study --storage $STORAGE_URL`
-          mpirun -n 2 -- python $file $STUDY_NAME $STORAGE_URL > /dev/null
+          if [[ $file == "**/examples/**/*.py" ]]; then
+            STUDY_NAME=`optuna create-study --storage $STORAGE_URL`
+            mpirun -n 2 -- python $file $STUDY_NAME $STORAGE_URL > /dev/null
+          fi
         done
       env:
         OMP_NUM_THREADS: 1
