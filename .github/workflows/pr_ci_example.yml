@@ -59,8 +59,8 @@ jobs:
 
         for file in ${{ steps.files.outputs.all }}
         do
-          echo $file
-          if [[ $file == "**/examples/**/*.py" ]]; then
+          if [[ $file == "examples/**/*.py" ]]; then
+            echo $file
             python $file ? /dev/null
             if grep -e '\-\-pruning' $file > /dev/null; then
               echo $file --pruning
@@ -73,8 +73,8 @@ jobs:
         STORAGE_URL=sqlite:///example.db
         for file in ${{ steps.files.outputs.all }}
         do
-          echo $file
-          if [[ $file == "**/examples/**/*.py" ]]; then
+          if [[ $file == "examples/**/*.py" ]]; then
+            echo $file
             STUDY_NAME=`optuna create-study --storage $STORAGE_URL`
             mpirun -n 2 -- python $file $STUDY_NAME $STORAGE_URL > /dev/null
           fi
