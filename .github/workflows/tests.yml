@@ -25,9 +25,6 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
-    # Not intended for forks.
-    if: github.repository == 'optuna/optuna'
-
     steps:
     - name: Checkout
       uses: actions/checkout@v2
@@ -69,9 +66,6 @@ jobs:
     strategy:
       matrix:
         python-version: [3.5, 3.6, 3.7, 3.8]
-
-    # Not intended for forks.
-    if: github.repository == 'optuna/optuna'
 
     steps:
     - name: Checkout
