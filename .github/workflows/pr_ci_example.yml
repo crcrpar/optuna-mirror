@@ -57,9 +57,9 @@ jobs:
           IGNORES='chainermn_.*'
         fi
 
-        for file in ${{ steps.files.outputs.all }}
+        for file in ${{ steps.files.outputs.all }} | grep -vE "$IGNORES"
         do
-          if [[ $file == "examples/**/*.py" ]]; then
+          if [[ $file == examples/**/*.py ]]; then
             echo $file
             python $file ? /dev/null
             if grep -e '\-\-pruning' $file > /dev/null; then
@@ -71,9 +71,9 @@ jobs:
     - name: run changed multi-node examples
       run: |
         STORAGE_URL=sqlite:///example.db
-        for file in ${{ steps.files.outputs.all }}
+        for file in ${{ steps.files.outputs.all }} | grep -vE "$IGNORES"
         do
-          if [[ $file == "examples/**/*.py" ]]; then
+          if [[ $file == examples/**/*.py ]]; then
             echo $file
             STUDY_NAME=`optuna create-study --storage $STORAGE_URL`
             mpirun -n 2 -- python $file $STUDY_NAME $STORAGE_URL > /dev/null
