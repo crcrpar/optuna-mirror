@@ -27,7 +27,7 @@ jobs:
       env:
         cache-name: cache-dependencies
       with:
-        path: ${{ env.RUNNER_TOOL_CACHE }}
+        path: /opt/hostedtoolcache/Python
         key: ${{ runner.os }}-${{ matrix.python-version }}-${{ env.cache-name }}-${{ hashFiles('**/setup.py') }}
         restore-keys: ${{ runner.os }}-${{ matrix.python-version }}-${{ env.cache-name }}-${{ hashFiles('**/setup.py') }}
     - name: Install Dependencies
