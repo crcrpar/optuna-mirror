@@ -57,7 +57,7 @@ jobs:
           IGNORES='chainermn_.*'
         fi
 
-        for file in `echo ${{ steps.files.outputs.all }} | grep -vE "$IGNORES"`
+        for file in `${${{ steps.files.outputs.all }}// /\\n} | grep -vE "$IGNORES"`
         do
           case $file in
             examples/**/*.py)
@@ -72,7 +72,7 @@ jobs:
     - name: run changed multi-node examples
       run: |
         STORAGE_URL=sqlite:///example.db
-        for file in `echo ${{ steps.files.outputs.all }} | grep -vE "$IGNORES"`
+        for file in `${${{ steps.files.outputs.all }}// /\\n} | grep -vE "$IGNORES"`
         do
           case $file in
             examples/**/*.py)
