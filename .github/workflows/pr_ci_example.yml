@@ -26,7 +26,7 @@ jobs:
       with:
         path: /opt/hostedtoolcache/Python/**/site-packages
         key: ${{ runner.os }}-${{ matrix.python-version }}-${{ env.cache-name }}-${{ hashFiles('**/setup.py') }}
-        restore-keys: ${{ runner.os }}-${{ matrix.python-version }}-${{ env.cache-name }}-${{ hashFiles('**/setup.py') }}
+        restore-keys: ${{ runner.os }}-${{ matrix.python-version }}-${{ env.cache-name }}-
     - name: install dependencies (apt)
       run: |
         sudo apt-get update
