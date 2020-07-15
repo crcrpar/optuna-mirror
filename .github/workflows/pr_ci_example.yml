@@ -28,8 +28,8 @@ jobs:
         cache-name: cache-dependencies
       with:
         path: ${{ env.RUNNER_TOOL_CACHE }}
-        key: ${{ runner.os }}-${{ matrix.python-version }}-${{ env.cache-name }}-${{ hashFile('**/setup.py') }}
-        restore-keys: ${{ runner.os }}-${{ matrix.python-version }}-${{ env.cache-name }}-${{ hashFile('**/setup.py') }}
+        key: ${{ runner.os }}-${{ matrix.python-version }}-${{ env.cache-name }}-${{ hashFiles('**/setup.py') }}
+        restore-keys: ${{ runner.os }}-${{ matrix.python-version }}-${{ env.cache-name }}-${{ hashFiles('**/setup.py') }}
     - name: Install Dependencies
       run: |
         sudo apt-get update
