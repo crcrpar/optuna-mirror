@@ -19,9 +19,6 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Check python installation path
-      run: |
-        python -c 'import sys; print(sys.path)'
     - name: set up dependencies cache
       uses: actions/cache@v2
       env:
@@ -30,7 +27,7 @@ jobs:
         path: /opt/hostedtoolcache/Python
         key: ${{ runner.os }}-${{ matrix.python-version }}-${{ env.cache-name }}-${{ hashFiles('**/setup.py') }}
         restore-keys: ${{ runner.os }}-${{ matrix.python-version }}-${{ env.cache-name }}-${{ hashFiles('**/setup.py') }}
-    - name: Install Dependencies
+    - name: install dependencies
       run: |
         sudo apt-get update
         sudo apt-get -y install openmpi-bin libopenmpi-dev
@@ -44,3 +41,35 @@ jobs:
 
         # Install all dependencies needed for examples.
         pip install --progress-bar off $(ls dist/*.tar.gz)[example] -f https://download.pytorch.org/whl/torch_stable.html
+    - name: run changed examples
+      env:
+        OMP_NUM_THREADS: 1
+      run: |
+        if [ ${{ matrix.python-version }} = 3.5 ]; then
+          IGNORES='chainermn_.*|pytorch_lightning.*|fastai_.*|allennlp_.*|catalyst_.*|sb3_.*'
+        elif [ ${{ matrix.python-version }} = 3.8 ]; then
+          IGNORES='chainermn_.*|dask_ml_.*|keras_.*|tensorboard_.*|tensorflow_.*|tfkeras_.*|fastai_.*|allennlp_.*'
+        else
+          IGNORES='chainermn_.*'
+        fi
+
+        for file in $(git --no-pager diff --name-only FETCH_HEAD $(git merge-base FETCH_HEAD master))
+        do
+          echo $file
+          python $file > /dev/null
+          if grep -e '\-\-pruning' $file > /dev/null; then
+            echo $file --pruning
+            python $file --pruning > /dev/null
+          fi
+        done
+    - name: run changed multi-node examples
+      run: |
+        STORAGE_URL=sqlite:///example.db
+        for file in $(git --no-pager diff --name-only FETCH_HEAD $(git merge-base FETCH_HEAD master))
+        do
+          echo $file
+          STUDY_NAME=`optuna create-study --storage $STORAGE_URL`
+          mpirun -n 2 -- python $file $STUDY_NAME $STORAGE_URL > /dev/null
+        done
+      env:
+        OMP_NUM_THREADS: 1
