@@ -2,9 +2,10 @@ ARG PYTHON_VERSION=3.7
 
 FROM python:${PYTHON_VERSION}
 
+ENV DEBIAN_FRONTEND=noninteractive
 ENV PIP_OPTIONS "--no-cache-dir --progress-bar off"
 
-RUN apt-get update \
+RUN apt-get -y update \
     && apt-get -y install openmpi-bin libopenmpi-dev \
     && rm -rf /var/lib/apt/lists/* \
     && pip install --no-cache-dir -U pip \
