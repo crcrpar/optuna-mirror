@@ -5,7 +5,7 @@ Saving/Resuming Study with RDB Backend
 ==========================================
 
 An RDB backend enables persistent experiments (i.e., to save and resume a study) as well as access to history of studies.
-In addition, we can run multi-node optimization tasks with this feature, which is described in :ref:`sphx_glr_tutorial_004_distributed.py`.
+In addition, we can run multi-node optimization tasks with this feature, which is described in :ref:`distributed`.
 
 In this section, let's try simple examples running on a local environment with SQLite DB.
 
@@ -76,7 +76,7 @@ Out:
          4       4  113.039223 -8.631991  COMPLETE
          5       5   57.319570  9.570969  COMPLETE
 
-A :class:`~optuna.study.Study` object also provides properties such as :attr:`~optuna.study.Study.trials`, :attr:`~optuna.study.Study.best_value`, :attr:`~optuna.study.Study.best_params` (see also :ref:`sphx_glr_tutorial_001_first.py`).
+A :class:`~optuna.study.Study` object also provides properties such as :attr:`~optuna.study.Study.trials`, :attr:`~optuna.study.Study.best_value`, :attr:`~optuna.study.Study.best_params` (see also :ref:`first`).
 
 .. code-block:: python
 

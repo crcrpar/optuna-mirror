@@ -1,8 +1,8 @@
 """
 .. _pruning:
 
-Pruning Unpromising Trials
-==========================
+Efficient Optimization Algorithms
+=================================
 
 This feature automatically stops unpromising trials at the early stages of the training (a.k.a., automated early-stopping).
 Optuna provides interfaces to concisely implement the pruning mechanism in iterative training algorithms.

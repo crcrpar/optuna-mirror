@@ -109,7 +109,7 @@ ENV/
 .mypy_cache
 
 # Sphinx
-tutorial/example.db
+tutorial/**/example.db
 docs/_build/
 docs/source/reference/generated/
 docs/source/reference/alias_generated/

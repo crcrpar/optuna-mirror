@@ -47,7 +47,7 @@ def objective(trial):
 
 ###################################################################################################
 # Even so, we can invoke the optimization as follows.
-# (Don't care about ``--storage sqlite:///example.db`` for now, which is described in :ref:`sphx_glr_tutorial_003_rdb.py`.)
+# (Don't care about ``--storage sqlite:///example.db`` for now, which is described in :ref:`rdb`.)
 #
 # .. code-block:: bash
 #

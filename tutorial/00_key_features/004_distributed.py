@@ -1,8 +1,8 @@
 """
 .. _distributed:
 
-Distributed Optimization
-========================
+Easy Parallelization
+====================
 
 There is no complicated setup but just sharing the same study name among nodes/processes.
 
@@ -55,4 +55,9 @@ Process 2 (the same command as process 1):
 
 .. note::
     Please avoid putting the SQLite database on NFS when running distributed optimizations. See also: https://www.sqlite.org/faq.html#q5
+
+Parallelization with Kubernetes
+-------------------------------
+
+For the details, see `kubernetes examples <https://github.com/optuna/optuna/tree/master/examples/kubernetes>`_.
 """

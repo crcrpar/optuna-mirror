@@ -72,6 +72,8 @@ def get_extras_require() -> Dict[str, List[str]]:
             "pillow",
             "matplotlib",
             "scikit-learn",
+            "chainer",
+            "plotly>=4.0.0",  # optuna/visualization.
         ],
         "example": [
             "catboost",
