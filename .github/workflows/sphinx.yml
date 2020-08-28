@@ -1,0 +1,43 @@
+# This is a basic workflow to help you get started with Actions
+
+name: sphinx
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on:
+  pull_request:
+    branches: [ master ]
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-18.04
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    - uses: actions/checkout@v2
+
+    - uses: actions/setup-python@v2
+      with:
+        python-version: '3.7'
+
+    - name: Install Optuna
+      run: |
+        python3 -m venv docs-env
+        source docs-env/bin/activate
+        pip install -U pip
+        pip install --progress-bar off .[document]
+
+    - name: Build docs with Sphinx
+      run: |
+        source docs-env/bin/activate
+        cd docs
+        make html
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: latest-docs
+        path: docs/build/html
