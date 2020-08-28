@@ -7,7 +7,11 @@ Pythonic Search Space
 Defining Parameter Spaces
 -------------------------
 
-Optuna supports five kinds of parameters.
+Optuna supports three kinds of parameters:
+* Categorical parameters
+* Integer parameters
+* Floating point parameters
+. Integer and floating point parameters can be either discretized or in log domain.
 """
 
 
@@ -16,19 +20,25 @@ import optuna
 
 def objective(trial):
     # Categorical parameter
-    optimizer = trial.suggest_categorical('optimizer', ['MomentumSGD', 'Adam'])
+    optimizer = trial.suggest_categorical("optimizer", ["MomentumSGD", "Adam"])
 
-    # Int parameter
-    num_layers = trial.suggest_int('num_layers', 1, 3)
+    # Integer parameter
+    num_layers = trial.suggest_int("num_layers", 1, 3)
 
-    # Uniform parameter
-    dropout_rate = trial.suggest_float('dropout_rate', 0.0, 1.0)
+    # Integer parameter (log)
+    num_channels = trial.suggest_int("num_channels", 32, 512, log=True)
 
-    # Loguniform parameter
-    learning_rate = trial.suggest_float('learning_rate', 1e-5, 1e-2, log=True)
+    # Integer parameter (discretized)
+    num_units = trial.suggest_int("num_units", 10, 100, step=5)
 
-    # Discrete-uniform parameter
-    drop_path_rate = trial.suggest_float('drop_path_rate', 0.0, 1.0, step=0.1)
+    # Floating point parameter
+    dropout_rate = trial.suggest_float("dropout_rate", 0.0, 1.0)
+
+    # Floating point parameter (log)
+    learning_rate = trial.suggest_float("learning_rate", 1e-5, 1e-2, log=True)
+
+    # Floating point parameter (discretized)
+    drop_path_rate = trial.suggest_float("drop_path_rate", 0.0, 1.0, step=0.1)
 
 
 ###################################################################################################
@@ -46,33 +56,33 @@ import sklearn.svm
 
 
 def objective(trial):
-    classifier_name = trial.suggest_categorical('classifier', ['SVC', 'RandomForest'])
-    if classifier_name == 'SVC':
-        svc_c = trial.suggest_loguniform('svc_c', 1e-10, 1e10)
+    classifier_name = trial.suggest_categorical("classifier", ["SVC", "RandomForest"])
+    if classifier_name == "SVC":
+        svc_c = trial.suggest_float("svc_c", 1e-10, 1e10, log=True)
         classifier_obj = sklearn.svm.SVC(C=svc_c)
     else:
-        rf_max_depth = int(trial.suggest_loguniform('rf_max_depth', 2, 32))
+        rf_max_depth = trial.suggest_int("rf_max_depth", 2, 32, log=True)
         classifier_obj = sklearn.ensemble.RandomForestClassifier(max_depth=rf_max_depth)
 
 
 ###################################################################################################
 # Loops:
-import chainer
-import chainer.functions as F
-import chainer.links as L
+import torch
+import torch.nn as nn
 
 
-def create_model(trial):
-    n_layers = trial.suggest_int('n_layers', 1, 3)
+def create_model(trial, in_size):
+    n_layers = trial.suggest_int("n_layers", 1, 3)
 
     layers = []
     for i in range(n_layers):
-        n_units = int(trial.suggest_float('n_units_l{}'.format(i), 4, 128, log=True))
-        layers.append(L.Linear(None, n_units))
-        layers.append(F.relu)
-    layers.append(L.Linear(None, 10))
+        n_units = trial.suggest_int("n_units_l{}".format(i), 4, 128, log=True)
+        layers.append(nn.Linear(in_size, n_units))
+        layers.append(nn.ReLU())
+        in_size = n_units
+    layers.append(nn.Linear(in_size, 10))
 
-    return chainer.Sequential(*layers)
+    return nn.Sequential(*layers)
 
 
 ###################################################################################################
