@@ -1,3 +1,4 @@
+import functools
 import json
 import os
 from typing import Any
@@ -22,6 +23,19 @@ if _imports.is_successful():
     import _jsonnet
 else:
     EpochCallback = object  # NOQA
+
+
+def _wrapped_epochcallback_register(cls: "EpochCallback") -> "EpochCallback":
+    if _imports.is_successful:
+        @functools.wraps(cls)
+        def _register(name: str) -> "EpochCallback":
+            return EpochCallback.register(cls, name)
+        return _register
+    else:
+        @functools.wraps(cls)
+        def _nop_register(name: str) -> "EpochCallback":
+            return cls
+        return _register
 
 
 def dump_best_config(input_config_file: str, output_config_file: str, study: optuna.Study) -> None:
@@ -164,8 +178,8 @@ class AllenNLPExecutor(object):
         return metrics[self._metrics]
 
 
+@_wrapped_epochcallback_register("optuna_pruner")
 @experimental("2.0.0")
-@EpochCallback.register("optuna_pruner")
 class AllenNLPPruningCallback(EpochCallback):
     """AllenNLP callback to prune unpromising trials.
 
