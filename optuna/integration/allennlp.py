@@ -1,6 +1,7 @@
 import json
 import os
 from typing import Any
+from typing import Callable
 from typing import Dict
 from typing import List
 from typing import Optional
@@ -12,6 +13,7 @@ from optuna._imports import try_import
 from optuna import load_study
 from optuna import Trial
 
+
 with try_import() as _imports:
     import allennlp
     import allennlp.commands
@@ -21,7 +23,16 @@ with try_import() as _imports:
 if _imports.is_successful():
     import _jsonnet
 else:
-    EpochCallback = object  # NOQA
+    class EpochCallback:
+        """Dummy EpochCallback for documentation."""
+
+        def register(func: Any) -> Callable:
+            """Dummy decorator for documentation."""
+
+            def wrapper(*args: Any, **kwargs: Any) -> None:
+                pass
+
+            return wrapper
 
 
 def dump_best_config(input_config_file: str, output_config_file: str, study: optuna.Study) -> None:
