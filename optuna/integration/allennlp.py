@@ -26,11 +26,12 @@ else:
     class EpochCallback:
         """Dummy EpochCallback for documentation."""
 
-        def register(func: Any) -> Callable:
+        @classmethod
+        def register(cls: Any, *args: Any, **kwargs: Any) -> Callable:
             """Dummy decorator for documentation."""
 
-            def wrapper(*args: Any, **kwargs: Any) -> None:
-                pass
+            def wrapper(subclass: Any, *args: Any, **kwargs: Any) -> None:
+                return subclass
 
             return wrapper
 
