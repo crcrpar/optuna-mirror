@@ -85,7 +85,7 @@ def get_extras_require() -> Dict[str, List[str]]:
             "scikit-learn>=0.19.0,<0.23.0",  # optuna/visualization/param_importances.py.
             "xgboost",
             "keras",
-            "tensorflow>=2.0.0",
+            "tensorflow-cpu>=2.0.0",
             "tensorflow-datasets",
         ]
         + (
@@ -125,7 +125,7 @@ def get_extras_require() -> Dict[str, List[str]]:
             "scikit-optimize",
             "xgboost",
             "keras",
-            "tensorflow",
+            "tensorflow-cpu",
             "tensorflow-datasets",
         ]
         + (
