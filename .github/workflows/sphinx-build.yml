@@ -21,6 +21,19 @@ jobs:
       run: |
         python -m pip install -U pip
         pip install --progress-bar off -U .[doctest,document]
+        
+    - name: Get Date
+      id: get-date
+      run: |
+        echo "::set-output name=date::$(/bin/date -u "+%Y%m%d")"
+      shell: bash
+        
+    - name: Cache Tutorial
+      uses: actions/cache@v2
+      with:
+        path: docs/source/tutorial
+        key: ${{ runner.os }}-${{ hashFiles('**/setup.py') }}
+        restore-keys: ${{ runner.os }}-${{ hashFiles('**/setup.py' }}
 
     - name: Build Document
       run: |
