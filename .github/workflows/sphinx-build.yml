@@ -28,13 +28,13 @@ jobs:
         make html -j
         cd ../
 
+    - uses: actions/upload-artifact@v2
+      with:
+        name: built-document
+        path: docs/build
+
     - name: Run Doctest
       run: |
         cd docs
         make doctest -j
         cd ../
-
-    - uses: actions/upload-artifact@v2
-      with:
-        name: built-document
-        path: docs/build
