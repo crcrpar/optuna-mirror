@@ -33,7 +33,7 @@ jobs:
       with:
         path: docs/source/tutorial
         key: ${{ runner.os }}-${{ hashFiles('**/setup.py') }}
-        restore-keys: ${{ runner.os }}-${{ hashFiles('**/setup.py' }}
+        restore-keys: ${{ runner.os }}-${{ hashFiles('**/setup.py') }}
 
     - name: Build Document
       run: |
