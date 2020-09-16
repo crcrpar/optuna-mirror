@@ -189,7 +189,6 @@ def find_any_distribution(pkgs: List[str]) -> Optional[pkg_resources.Distributio
             pass
     return None
 
-
 setup(
     name="optuna",
     version=get_version(),
