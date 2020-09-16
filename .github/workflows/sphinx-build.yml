@@ -1,0 +1,40 @@
+name: Sphinx
+
+on:
+  push:
+    branches:
+      - master
+  pull_request: {}
+
+jobs:
+  build:
+
+    runs-on: ubuntu-18.04
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python_version: 3.8
+
+    - name: Install
+      run: |
+        python -m pip install -U pip
+        pip install --progress-bar off -U .[doctest,document]
+
+    - name: Build Document
+      run: |
+        cd docs
+        make html -j
+        cd ../
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: built-document
+        path: docs/build
+
+    - name: Run Doctest
+      run: |
+        cd docs
+        make doctest -j
+        cd ../
