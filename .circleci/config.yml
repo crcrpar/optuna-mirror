@@ -79,6 +79,10 @@ jobs:
             pip install -U pip
             pip install --progress-bar off .[document]
 
+      - restore_cache:
+          keys:
+            - tutorial-cache-{{ checksum "setup.py" }}
+
       - run:
           name: build
           command: |
@@ -88,6 +92,11 @@ jobs:
 
       - store_artifacts:
           path: ./docs/build
+
+      - save_cache:
+          key: tutorial-cache-{{ checksum "setup.py" }}
+          paths:
+            - docs/source/tutorial
 
   doctest:
     docker:
@@ -104,6 +113,10 @@ jobs:
             . venv/bin/activate
             pip install -U pip
             pip install --progress-bar off .[doctest,document]
+
+      - restore_cache:
+          keys:
+            - tutorial-cache-{{ checksum "setup.py" }}
 
       - run:
           name: build
