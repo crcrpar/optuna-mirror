@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 .. module:: optuna.samplers
 
 optuna.samplers
