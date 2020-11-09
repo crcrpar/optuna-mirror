@@ -60,7 +60,7 @@ jobs:
         pip install --progress-bar off .[codecov]
 
     - name: Tests
-      runs: |
+      run: |
         pytest --cov=optuna --cov-report=xml tests
 
     - name: Upload coverage to Codecov
