@@ -16,9 +16,6 @@ jobs:
       matrix:
         python-version: [3.6, 3.8]
 
-    # Not intended for forks.
-    if: github.repository == 'optuna/optuna'
-
     steps:
     - name: Checkout
       uses: actions/checkout@v2
