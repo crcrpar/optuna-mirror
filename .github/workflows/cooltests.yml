@@ -63,7 +63,7 @@ jobs:
 
     - name: Tests
       run: |
-        pytest -n auto --cov=optuna --cov-report=xml tests
+        pytest --cov=optuna --cov-report=xml tests
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v1
