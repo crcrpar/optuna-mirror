@@ -15,7 +15,6 @@ jobs:
       matrix:
         problem: [hpobench-protein, nasbench]
         sampler: [RandomSampler, TPESampler]
-        pruner: [MedianPruner, HyperbandPruner, NopPruner]
 
     steps:
     - uses: actions/checkout@v2
@@ -77,23 +76,20 @@ jobs:
         curl -L $(./kurobako dataset nasbench url) -o nasbench_full.tfrecord
         ./kurobako dataset nasbench convert nasbench_full.tfrecord nasbench_full.bin
 
+    - name: Set name
+      run: |
+        export CINAME=${{ matrix.problem }}-${{ matrix.sampler }}
+
     - name: Run Benchmark
       run: |
-        python run_kurobako.py --name "CI" --kurobako-path "." --input-dir "." --output-dir "out" --sampler-list ${{ matrix.sampler }} --pruner-list ${{ matrix.pruner }} --problem-list ${{ matrix.problem }} --plot
+        python run_kurobako.py --name "$CINAME" --kurobako-path "." --input-dir "." --output-dir "out" --sampler-list ${{ matrix.sampler }} --problem-list ${{ matrix.problem }} --plot
 
     - uses: actions/upload-artifact@v2
       with:
         name: benchmark-report
         path: |
-          out/report/CI/report_CI.md
-          out/**/*.png
-
-    - uses: actions/download-artifact@v2
-      with:
-        name: benchmark-report
-        path: |
-          out/report/CI/report_CI.md
-          out/**/*.png
+          out/reports/${CINAME}/report_${CINAME}.md
+          out/results/${CINAME}/images/curve/*.png
 
     - name: cml_run
       env:
@@ -102,6 +98,6 @@ jobs:
         for file in `find out -type f -name '*.png'`
         do
           echo $file
-          cml-publish $file --md >> out/report/CI/report_CI.md
+          cml-publish $file --md >> out/reports/${CINAME}/report_${CINAME}.md
         done
-        cml-send-github-check out/report/CI/report_CI.md
+        cml-send-comment out/reports/${CINAME}/report_${CINAME}.md

@@ -169,7 +169,7 @@ def _run_kurobako(args: argparse.Namespace) -> None:
     )
     subprocess.check_call(cmd, shell=True)
 
-    reports_directory = os.path.join(args.output_dir, "report", args.name)
+    reports_directory = os.path.join(args.output_dir, "reports", args.name)
     os.makedirs(reports_directory, exist_ok=True)
     cmd = "cat {} | {} report > {}".format(
         result_json_fn,
