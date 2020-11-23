@@ -1,6 +1,13 @@
 # macOS metadata
 .DS_Store
 
+# gitignore template for Bazel build system
+# website: https://bazel.build/
+
+# Ignore all bazel-* symlinks. There is no full list since this can change
+# based on the name of the directory bazel is cloned into.
+/bazel-*
+
 # Ignore files that examples create
 t10k-images-idx3-ubyte*
 t10k-labels-idx1-ubyte*
