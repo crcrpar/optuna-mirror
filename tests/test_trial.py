@@ -1278,7 +1278,7 @@ def test_create_trial(state: TrialState) -> None:
         # Raise `ValueError` when both `value` and `values` are passed.
         with pytest.raises(ValueError):
             create_trial(state=state, value=value, values=[value, value])
-        # Raise `ValueError` when
+        # Raise `ValueError` when either `params` or `distributions` is `None`.
         with pytest.raises(ValueError):
             create_trial(state=state, value=value, params=params, distributions=None)
         with pytest.raises(ValueError):
