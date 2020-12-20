@@ -546,6 +546,16 @@ def create_trial(
         Please note that this is a low-level API. In general, trials that are passed to objective
         functions are created inside :func:`~optuna.study.Study.optimize`.
 
+    .. note::
+
+        You cannot specify both ``value`` and ``values`` when ``state`` is ``None``
+        or ``TrialState.COMPLETE``.
+
+    .. note::
+
+        Both ``params`` and ``distributions`` are required when ``state``
+        is ``None`` or ``TrialState.COMPLETE``.
+
     Args:
         state:
             Trial state.
