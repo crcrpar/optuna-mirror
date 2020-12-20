@@ -1271,6 +1271,19 @@ def test_create_trial(state: TrialState) -> None:
     assert trial.datetime_start is not None
     assert (trial.datetime_complete is not None) == (state is None or state.is_finished())
 
+    if state is None:
+        # Raise `ValueError` when both `value` and `values` are `None`.
+        with pytest.raises(ValueError):
+            create_trial(state=state, value=None, values=None)
+        # Raise `ValueError` when both `value` and `values` are passed.
+        with pytest.raises(ValueError):
+            create_trial(state=state, value=value, values=[value, value])
+        # Raise `ValueError` when
+        with pytest.raises(ValueError):
+            create_trial(state=state, value=value, params=params, distributions=None)
+        with pytest.raises(ValueError):
+            create_trial(state=state, value=value, params=None, distributions=distributions)
+
 
 def test_frozen_init() -> None:
     def _create_trial(value: Optional[float], values: Optional[List[float]]) -> FrozenTrial:
