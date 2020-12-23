@@ -108,6 +108,11 @@ def get_extras_require() -> Dict[str, List[str]]:
             "dask-ml",
             "botorch ; python_version>'3.6'",
             "fastai",
+            # haiku example
+            "jax",
+            "jaxlib",
+            "dm-haiku",
+            "optax",
         ],
         "experimental": ["redis"],
         "testing": [
