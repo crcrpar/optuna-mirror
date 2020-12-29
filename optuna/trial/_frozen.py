@@ -560,7 +560,8 @@ def create_trial(
         state:
             Trial state.
         value:
-            Trial objective value. Must be specified if ``state`` is ``None`` or :class:`TrialState.COMPLETE`.
+            Trial objective value. Must be specified if ``state`` is ``None``
+            or :class:`TrialState.COMPLETE`.
         values:
             Sequence of the trial objective values. The length is greater than 1 if the problem is
             multi-objective optimization.
