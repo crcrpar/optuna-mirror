@@ -99,6 +99,7 @@ class LastPlacePruner(BasePruner):
 ###################################################################################################
 # Lastly, let's confirm the implementation is correct with the simple hyperparameter optimization.
 
+
 def objective(trial):
     iris = load_iris()
     classes = np.unique(iris.target)
@@ -121,7 +122,6 @@ def objective(trial):
             raise optuna.TrialPruned()
 
     return score
-
 
 
 pruner = LastPlacePruner(warmup_steps=1, warmup_trials=5)
