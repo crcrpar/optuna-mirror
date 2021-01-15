@@ -548,13 +548,12 @@ def create_trial(
 
     .. note::
 
-        You cannot specify both ``value`` and ``values`` when ``state`` is ``None``
-        or ``TrialState.COMPLETE``.
+        When ``state`` is :obj:`None` or ``TrialState.COMPLETE``, the following parameters are
+        required:
 
-    .. note::
-
-        Both ``params`` and ``distributions`` are required when ``state``
-        is ``None`` or ``TrialState.COMPLETE``.
+        * ``params``
+        * ``distributions``
+        * ``value`` or ``values``
 
     Args:
         state:
