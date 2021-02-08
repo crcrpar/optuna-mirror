@@ -1,5 +1,4 @@
-name: support-other-platforms
-
+name: win-mac-tests
 on:
   push:
     branches:
