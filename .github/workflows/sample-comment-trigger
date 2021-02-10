@@ -1,0 +1,28 @@
+name: "trigger by foobarbaz"
+on:
+  issue_comment:
+    types: [created, edited]
+
+jobs:
+  manual_plan:
+    name: "manual plan"
+      if: contains(github.event.comment.html_url, '/pull/') && startsWith(github.event.comment.body, '/foobarbaz')
+      runs-on: [ubuntu-latest]
+    steps:
+    - name: setup
+      run: echo hello
+      id: setup
+    - name: setup success message
+      uses: actions/github-script@0.9.0
+      if: steps.plan.outputs.exitcode == 0
+      env:
+        STDOUT: "```${{ steps.setup.outputs.stdout }}```"
+      with:
+        github-token: ${{secrets.GITHUB_TOKEN}}
+        script: |
+          github.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: "#### `trigger by comment sample` Success\n" + process.env.STDOUT
+          })
