@@ -1,4 +1,4 @@
-name: mac/Win Integration Tests
+name: mac Integration Tests
 
 on:
   push:
