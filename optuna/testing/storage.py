@@ -32,7 +32,7 @@ class StorageSupplier(object):
             return optuna.storages.InMemoryStorage()
         elif self.storage_specifier == "sqlite":
             self.tempfile = tempfile.NamedTemporaryFile()
-            url = "sqlite:///{}".format(self.tempfile.name)
+            url = "sqlite:///{}.sqlite".format(self.tempfile.name)
             return optuna.storages.RDBStorage(
                 url, engine_kwargs={"connect_args": {"timeout": SQLITE3_TIMEOUT}}
             )

@@ -50,7 +50,7 @@ def test_init_cmaes_opts() -> None:
         assert np.array_equal(actual_kwargs["mean"], np.array([0, 0]))
         assert actual_kwargs["sigma"] == 0.1
         assert np.allclose(actual_kwargs["bounds"], np.array([(-1, 1), (-1, 1)]))
-        assert actual_kwargs["seed"] == np.random.RandomState(1).randint(1, 2 ** 32)
+        assert actual_kwargs["seed"] == np.random.RandomState(1).randint(1, 2 ** 32, dtype=np.int64)
         assert actual_kwargs["n_max_resampling"] == 10 * 2
         assert actual_kwargs["population_size"] is None
 

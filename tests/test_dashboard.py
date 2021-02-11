@@ -23,7 +23,7 @@ def test_write() -> None:
 
     study = _create_some_study()
 
-    with tempfile.NamedTemporaryFile("r") as tf:
+    with tempfile.NamedTemporaryFile("r", delete=False) as tf:
         optuna.dashboard._write(study, tf.name)
 
         html = tf.read()
