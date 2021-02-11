@@ -211,7 +211,9 @@ def test_create_study_command_with_skip_if_exists() -> None:
 
 def test_dashboard_command() -> None:
 
-    with StorageSupplier("sqlite") as storage, tempfile.NamedTemporaryFile("r", delete=False) as tf_report:
+    with StorageSupplier("sqlite") as storage, tempfile.NamedTemporaryFile(
+        "r", delete=False
+    ) as tf_report:
         assert isinstance(storage, RDBStorage)
         storage_url = str(storage.engine.url)
 
@@ -239,7 +241,9 @@ def test_dashboard_command() -> None:
 )
 def test_dashboard_command_with_allow_websocket_origin(origins: List[str]) -> None:
 
-    with StorageSupplier("sqlite") as storage, tempfile.NamedTemporaryFile("r", delete=False) as tf_report:
+    with StorageSupplier("sqlite") as storage, tempfile.NamedTemporaryFile(
+        "r", delete=False
+    ) as tf_report:
         assert isinstance(storage, RDBStorage)
         storage_url = str(storage.engine.url)
 
