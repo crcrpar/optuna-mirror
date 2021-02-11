@@ -14,7 +14,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [macos-latest, windows-latest]
+        os: [macos-latest] # TODO: , windows-latest]
 
     steps:
     - name: Checkout
@@ -35,10 +35,9 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-3.7-${{ env.cache-name }}-${{ hashFiles('**/setup.py') }}
 
-    - name: Setup environment
+    - name: Setup mac environment
       run: |
-        sudo apt-get update
-        sudo apt-get -y install openmpi-bin libopenmpi-dev
+        brew install open-mpi
 
     - name: Install
       run: |
