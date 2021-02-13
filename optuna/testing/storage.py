@@ -31,14 +31,14 @@ class StorageSupplier(object):
         if self.storage_specifier == "inmemory":
             return optuna.storages.InMemoryStorage()
         elif self.storage_specifier == "sqlite":
-            self.tempfile = tempfile.NamedTemporaryFile()
-            url = "sqlite:///{}".format(self.tempfile.name)
+            self.tempfile = tempfile.NamedTemporaryFile(delete=False)
+            url = "sqlite:///{}.db".format(self.tempfile.name)
             return optuna.storages.RDBStorage(
                 url, engine_kwargs={"connect_args": {"timeout": SQLITE3_TIMEOUT}}
             )
         elif self.storage_specifier == "cache":
-            self.tempfile = tempfile.NamedTemporaryFile()
-            url = "sqlite:///{}".format(self.tempfile.name)
+            self.tempfile = tempfile.NamedTemporaryFile(delete=False)
+            url = "sqlite:///{}.db".format(self.tempfile.name)
             return optuna.storages._CachedStorage(
                 optuna.storages.RDBStorage(
                     url, engine_kwargs={"connect_args": {"timeout": SQLITE3_TIMEOUT}}
