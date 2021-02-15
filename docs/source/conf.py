@@ -56,6 +56,7 @@ extensions = [
     "cliff.sphinxext",
     "sphinx_copybutton",
     "sphinx_gallery.gen_gallery",
+    "sphinx_gallery.load_style",
     "matplotlib.sphinxext.plot_directive",
     "sphinx_plotly_directive",
 ]
