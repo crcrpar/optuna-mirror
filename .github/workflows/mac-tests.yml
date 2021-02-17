@@ -1,4 +1,4 @@
-name: win-mac-tests
+name: mac-tests
 
 on:
   push:
