@@ -73,7 +73,7 @@ If you catch format errors, you can automatically fix them by auto-formatters.
 # Install auto-formatters.
 $ pip install .[checking]
 
-$ ./formats.sh 
+$ ./tools/formats.sh 
 ```
 
 ### Documentation
