@@ -3,7 +3,10 @@ import os
 from pathlib import Path
 import subprocess
 import sys
-from typing import Dict, List, Optional, Tuple
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Tuple
 
 
 EXAMPLES_DIR = Path(__file__).parents[1] / Path("examples")
