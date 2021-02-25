@@ -22,7 +22,7 @@ import optuna
 
 
 DEVICE = torch.device("cpu")
-BATCHSIZE = 128
+BATCHSIZE = 256
 CLASSES = 10
 DIR = os.getcwd()
 EPOCHS = 10
