@@ -103,7 +103,7 @@ def run_vanilla_examples(
     examples: List[str], environment_variables: Optional[Dict[str, str]] = None
 ):
     if not examples:
-        print("No files to run")
+        print("No vanilla examples to run")
         return True
     print(f"Run {len(examples)} vanilla examples")
     for i, filename in enumerate(examples):
@@ -122,7 +122,7 @@ def run_ipynb_examples(
     ipynb_examples: List[str], environment_variables: Optional[Dict[str, str]] = None
 ):
     if not ipynb_examples:
-        print("No files to run")
+        print("No ipynb examples to run")
         return True
     print(f"Run {len(ipynb_examples)} ipynb examples")
     for i, filename in enumerate(ipynb_examples):
@@ -137,7 +137,7 @@ def run_multinode_examples(
     multinode_examples, environment_variables: Optional[Dict[str, str]] = None
 ):
     if not multinode_examples:
-        print("No files to run")
+        print("No multinode examples to run")
         return True
     print(f"Run {len(multinode_examples)} multinode examples")
     for i, filename in enumerate(multinode_examples):
@@ -160,7 +160,7 @@ def run_multinode_examples(
 
 def run_hydra_examples(hydra_examples, environment_variables: Optional[Dict[str, str]] = None):
     if not hydra_examples:
-        print("No files to run")
+        print("No hydra examples to run")
         return True
     print(f"Run {len(hydra_examples)} hydra examples")
     for i, filename in enumerate(hydra_examples):
