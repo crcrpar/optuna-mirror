@@ -3,6 +3,12 @@ name: examples
 on:
   schedule:
     - cron: '0 15 * * *'
+  pull_request:
+    branches:
+      -  base-20210303
+  push:
+    branches:
+      -  base-20210303
 
 jobs:
   examples:
@@ -14,7 +20,7 @@ jobs:
       matrix:
         python-version: [3.6, 3.7, 3.8]
 
-    if: github.repository == 'optuna/optuna'
+    # if: github.repository == 'optuna/optuna'
     steps:
     - uses: actions/checkout@v2
     - name: setup-python${{ matrix.python-version }}
